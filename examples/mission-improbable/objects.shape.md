@@ -1,29 +1,38 @@
 ---
 name: cabinet
-tags: [object, searchable]
+tags: #object #searchable
 ---
+
+```px
 +----+
 |####|
 |####|
 |----|
 |####|
 +----+
+```
 
 ---
 name: chair
-tags: [object]
+tags: #object
 ---
+
+```px
  +--+
  |..|
 ++--++
 |    |
+```
 
 ---
 name: terminal
-tags: [object, interactive]
+tags: #object #interactive
 ---
+
+```px
 +----+
 |....|
 |....|
 +----+
   ||
+```

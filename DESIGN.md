@@ -178,13 +178,16 @@ $ghost: alpha($fill, 0.5)
 
 ### Brush (`.brush.md`)
 
-```yaml
+````markdown
 ---
 name: checker
 ---
+
+```px
 AB
 BA
 ```
+````
 
 Pattern tiles infinitely. Letters bind to colours via style.
 
@@ -192,16 +195,19 @@ Pattern tiles infinitely. Letters bind to colours via style.
 
 ### Stamp (`.stamp.md`)
 
-```yaml
+````markdown
 ---
 name: brick
 glyph: B
 ---
+
+```px
 $$$$$$$$
 $......$
 $......$
 $$$$$$$$
 ```
+````
 
 **Pixel tokens:**
 
@@ -244,53 +250,62 @@ x: transparent
 
 ### Shape (`.shape.md`)
 
-```yaml
+````markdown
 ---
 name: wall-segment
-tags: [wall, solid, collidable]
+tags: #wall #solid #collidable
 ---
+
+```px
 +--+
 |BB|
 |BB|
 +--+
 ```
+````
 
 Shapes have no embedded style. Style applied at render time.
 
 ### Prefab (`.prefab.md`)
 
-```yaml
+````markdown
 ---
 name: tower
-tags: [structure, tall]
+tags: #structure #tall
 ---
+
+```px
 C
 W
 W
 W
 B
+```
 
 ---
 C: tower-cap
 W: wall-segment
 B: tower-base
-```
+````
 
 Grid positions shapes/prefabs. Whitespace is literal. Can nest prefabs.
 
 ### Map (`.map.md`)
 
-```yaml
+````markdown
 ---
 name: level-1
-tags: [level, dungeon, tutorial]
+tags: #level #dungeon #tutorial
 style: dungeon-dark           # Optional style override
 ---
+
+```px
 ################
 #              #
 #  T        T  #
 #==+========+==#
 ################
+```
 
 ---
 #: wall-segment
@@ -298,7 +313,7 @@ style: dungeon-dark           # Optional style override
 T: tower
 +: pillar-base
 " ": empty
-```
+````
 
 Semantically a level; structurally identical to prefab. `empty` is reserved (no output).
 

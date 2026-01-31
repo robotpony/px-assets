@@ -6,16 +6,19 @@ A CLI tool for generating sprites and sprite maps from text-based definitions.
 
 Define sprites using ASCII art in markdown files. Apply colour palettes and styles. Export to PNG, PICO-8, or Aseprite formats.
 
-```
+````markdown
 # wall.shape.md
 ---
 name: wall-segment
 ---
+
+```px
 +--+
 |..|
 |..|
 +--+
 ```
+````
 
 The same shape can be rendered with different palettes, at different scales, for different target platforms.
 

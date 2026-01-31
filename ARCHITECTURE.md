@@ -403,3 +403,4 @@ Legend:            C: tower-cap
 | Parallelism | Rayon work-stealing | Good default for mixed workloads |
 | Plugin system | None | Keep core simple; features via releases |
 | Output formats | PNG, P8, Aseprite | Cover major use cases without sprawl |
+| Builtins | Load from known path | `~/.px/defaults/` with embedded fallback; projects can override via `inherits:` |

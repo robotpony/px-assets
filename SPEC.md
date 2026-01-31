@@ -1,5 +1,5 @@
 
-# px sprite and map pipeline generation (specificatopm)
+# px sprite and map pipeline generation (specificatoin)
 
 #px01 #px #specification #draft
 
@@ -22,15 +22,20 @@
 
 All files follow:
 
-```
+````markdown
 ---
 yaml frontmatter
 ---
-body content
+
+```px
+body content (pixel/layout grids)
+```
 
 ---
 optional legend (prefab/map only)
-```
+````
+
+The `px` code fence renders properly in markdown viewers (Hugo, Obsidian) and enables syntax highlighting.
 
 Multiple definitions per file allowed, separated by `---` with `name:` in each frontmatter.
 
@@ -64,13 +69,16 @@ $fill: $mid
 
 ### Brush
 
-```yaml
+````markdown
 ---
 name: checker
 ---
+
+```px
 AB
 BA
 ```
+````
 
 **Rules:**
 
@@ -82,16 +90,19 @@ BA
 
 ### Stamp
 
-```yaml
+````markdown
 ---
 name: brick
 glyph: B
 ---
+
+```px
 $$$$$$$$
 $......$
 $......$
 $$$$$$$$
 ```
+````
 
 **Rules:**
 
@@ -128,16 +139,19 @@ x: transparent
 
 ### Shape
 
-```yaml
+````markdown
 ---
 name: wall-segment
-tags: [wall, solid]
+tags: #wall #solid
 ---
+
+```px
 +--+
 |BB|
 |BB|
 +--+
 ```
+````
 
 **Rules:**
 
@@ -150,22 +164,25 @@ tags: [wall, solid]
 
 ### Prefab
 
-```yaml
+````markdown
 ---
 name: tower
-tags: [structure]
+tags: #structure
 ---
+
+```px
 C
 W
 W
 W
 B
+```
 
 ---
 C: tower-cap
 W: wall-segment
 B: tower-base
-```
+````
 
 **Rules:**
 
@@ -178,16 +195,19 @@ B: tower-base
 
 ### Map
 
-```yaml
+````markdown
 ---
 name: level-1
-tags: [level, dungeon]
+tags: #level #dungeon
 ---
+
+```px
 ################
 #              #
 #  T        T  #
 #==+========+==#
 ################
+```
 
 ---
 #: wall-segment
@@ -195,7 +215,7 @@ tags: [level, dungeon]
 T: tower
 +: pillar-base
 " ": empty
-```
+````
 
 **Rules:**
 

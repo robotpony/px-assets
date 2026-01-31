@@ -1,19 +1,25 @@
 ---
 name: robot-idle
-tags: [npc, enemy]
+tags: #npc #enemy
 ---
+
+```px
  +--+
  |..|
 +|--||+
  |  |
  +  +
+```
 
 ---
 name: robot-alert
-tags: [npc, enemy]
+tags: #npc #enemy
 ---
+
+```px
  +##+
  |..|
 +|--||+
  |  |
  +  +
+```

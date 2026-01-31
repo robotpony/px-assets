@@ -1,7 +1,8 @@
 ---
 name: mi
 palette: mi
-grid_size: 8x8
+inherits: default
+grid_size: auto
 ---
 +: corner
 -: edge-h
@@ -10,3 +11,7 @@ grid_size: 8x8
 .: fill
 x: transparent
 " ": transparent
+o: fill
+/: edge-v
+\: edge-v
+=: edge-h

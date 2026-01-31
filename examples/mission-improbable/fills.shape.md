@@ -1,16 +1,21 @@
 ---
 name: rock
-tags: [background, decoration]
+tags: #background #decoration
 ---
+
+```px
 ........
 ..##....
 .####...
 .#####..
 ########
+```
 
 ---
 name: empty
-tags: [background]
+tags: #background
 ---
 
-
+```px
+x
+```
