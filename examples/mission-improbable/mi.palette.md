@@ -1,6 +1,8 @@
 ---
 name: mi
+scheme: retro
 ---
+
 $gold: #F7AD45
 $green-dark: #657C6A
 $green-light: #A2B9A7

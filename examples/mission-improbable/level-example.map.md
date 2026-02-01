@@ -1,7 +1,8 @@
 ---
 name: level-example
 tags: #level #test
-style: mi
+brush: mi
+shader: mi
 ---
 
 ```px
@@ -13,6 +14,9 @@ L====M========M===R
 
 ####################
 ```
+
+<!-- Maps to specific shapes -->
+<!-- Letters can also be assigned in shape files, handy for defaults -->
 
 ---
 L: platform-left

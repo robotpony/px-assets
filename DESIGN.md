@@ -23,7 +23,7 @@ px build --target=web         # Build specific target
 px build --target=web,pico8   # Build multiple targets
 px build web pico8            # Shorthand for above
 
-px build --style=dark         # Override default style
+px build --shader=dark        # Override default shader
 px build --variant=light-mode # Apply palette variant
 px build --output=dist/       # Override output directory
 
@@ -115,19 +115,53 @@ px --config=px.yaml           # Specify config file
 
 ### Common Structure
 
-All definition files share:
+Each definition follows:
 
-```markdown
+````markdown
 ---
-yaml frontmatter
+yaml frontmatter (name, tags, etc.)
 ---
+
+```px
 body content
+```
+````
 
+**Multiple definitions** per file are supported. Each starts with `---` and a `name:` field:
+
+````markdown
 ---
-optional legend (prefab/map only)
+name: first
+---
+
+```px
+...
 ```
 
-Multiple definitions per file, separated by `---` with `name:` in each frontmatter.
+---
+name: second
+---
+
+```px
+...
+```
+````
+
+**Legend footer** (prefab/map only) follows the code block:
+
+````markdown
+---
+name: level
+---
+
+```px
+#T#
+```
+
+---
+#: wall
+T: tower
+````
 
 ### Palette (`.palette.md`)
 
@@ -178,7 +212,22 @@ $ghost: alpha($fill, 0.5)
 
 ### Brush (`.brush.md`)
 
+Brushes define glyph→stamp mappings and optional fill patterns.
+
 ````markdown
+---
+name: default
+grid_size: auto
+inherits: builtin
+---
+
+# Glyph mappings
++: corner
+-: edge-h
+|: edge-v
+B: brick
+" ": { pattern: solid, color: $fill }
+
 ---
 name: checker
 ---
@@ -189,9 +238,14 @@ BA
 ```
 ````
 
-Pattern tiles infinitely. Letters bind to colours via style.
+**Rules:**
 
-**Builtins:** `solid`, `checker`, `diagonal-l`, `diagonal-r`, `h-line`, `v-line`, `noise`
+- `grid_size`: Expected stamp size (`8x8`, `16x16`, or `auto`)
+- Glyph mappings: `char: stamp-name` or inline `{ pattern: name, color: $x }`
+- Pattern definitions have a `px` body for the tile grid
+- Shapes use `default` brush unless overridden; inherit from parent map/prefab
+
+**Builtin patterns:** `solid`, `checker`, `diagonal-l`, `diagonal-r`, `h-line`, `v-line`, `noise`
 
 ### Stamp (`.stamp.md`)
 
@@ -219,29 +273,30 @@ $$$$$$$$
 | `A-Z` | Brush pattern colours |
 | `0-9` | Direct palette index (indexed modes) |
 
-### Style (`.style.md`)
+### Shader (`.shader.md`)
+
+Shaders bind palettes and apply effects at render time.
 
 ```yaml
 ---
-name: brick-red
-palette: dungeon              # Required
-palette_variant: light-mode   # Optional
-inherits: base-style          # Optional
-grid_size: 8x8                # Optional (auto = variable stamps)
+name: dungeon-dark
+palette: dungeon
+palette_variant: dark-mode
+inherits: base-shader
 ---
-# Glyph to stamp mappings
-+: corner
--: edge-h
-|: edge-v
-B: brick
-
-# Inline definitions
-" ": { brush: solid, color: $fill }
-x: transparent
-
-# Brush with pattern
-~: { brush: checker, colors: [$dark, $mid] }
+lighting: ambient
+ambient_color: $dark
+effects:
+  - type: vignette
+    strength: 0.3
 ```
+
+**Rules:**
+
+- `palette`: Required; which palette to use
+- `palette_variant`: Optional; activates a `@variant` block
+- `effects`: Optional; post-processing effects list
+- CLI flag `--shader=name` overrides; maps/prefabs can set `shader: name`
 
 **Grid size options:**
 
@@ -264,7 +319,7 @@ tags: #wall #solid #collidable
 ```
 ````
 
-Shapes have no embedded style. Style applied at render time.
+Shapes use `default` brush unless `brush: name` is specified. Inherit brush from parent map/prefab.
 
 ### Prefab (`.prefab.md`)
 
@@ -296,7 +351,8 @@ Grid positions shapes/prefabs. Whitespace is literal. Can nest prefabs.
 ---
 name: level-1
 tags: #level #dungeon #tutorial
-style: dungeon-dark           # Optional style override
+brush: dungeon
+shader: dungeon-dark          # Optional shader override
 ---
 
 ```px
@@ -483,7 +539,7 @@ dist/
 ### Format
 
 ```
-warning: missing stamp 'brick' in style 'dungeon'
+warning: missing stamp 'brick' in brush 'dungeon'
   --> shapes/wall.shape.md:4:2
    |
  4 | |BB|
@@ -502,7 +558,7 @@ error: circular reference in palette
 warning: stamp size mismatch
   --> stamps/brick.stamp.md
    |
-   = stamp 'brick' is 8x8, style 'retro' expects 16x16
+   = stamp 'brick' is 8x8, brush 'retro' expects 16x16
    = stamp will be centered with padding
 ```
 

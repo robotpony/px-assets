@@ -37,18 +37,23 @@ Phased approach from core parsing to full toolchain.
 - [ ] Implement builtin stamps (corner, edge-h, edge-v, solid, fill, transparent)
 - [ ] Implement builtin brushes (solid, checker, diagonal-l/r, h-line, v-line)
 
-### 1.5 Style Loader
+### 1.5 Brush Loader
 
 - [ ] Parse glyph → stamp mappings
-- [ ] Parse inline brush definitions
-- [ ] Resolve palette reference
+- [ ] Parse inline pattern definitions
 - [ ] Support grid_size configuration
+- [ ] Support inheritance
+
+### 1.6 Shader Loader
+
+- [ ] Parse palette reference
+- [ ] Parse effects list
 - [ ] Support inheritance
 
 ### 1.6 Shape Renderer
 
 - [ ] Parse shape grid (ASCII body)
-- [ ] Resolve glyphs to stamps via style
+- [ ] Resolve glyphs to stamps via brush
 - [ ] Expand stamps to pixels
 - [ ] Apply palette colours
 - [ ] Handle stamp padding/clipping for fixed grid_size
@@ -67,7 +72,7 @@ Phased approach from core parsing to full toolchain.
 - [ ] Implement miette-style error formatting
 - [ ] Add `px validate` command
 
-**Deliverable**: `px build shapes/wall.shape.md --style=default` outputs PNG.
+**Deliverable**: `px build shapes/wall.shape.md --brush=default --shader=default` outputs PNG.
 
 ---
 

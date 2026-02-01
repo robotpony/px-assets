@@ -7,37 +7,78 @@
 
 ### File Types
 
-| Extension     | Purpose                     | Body Format                  |
-| ------------- | --------------------------- | ---------------------------- |
-| `.palette.md` | Named colors and variants   | `$name: #hex` lines          |
-| `.brush.md`   | Fill patterns               | ASCII pattern grid           |
-| `.stamp.md`   | Character → pixel mapping   | ASCII pixel grid             |
-| `.style.md`   | Binds palette + stamps      | `glyph: stamp-name` mappings |
-| `.shape.md`   | Drawable ASCII compositions | ASCII art                    |
-| `.prefab.md`  | Shape compositions          | ASCII grid + legend          |
-| `.map.md`     | Level layouts               | ASCII grid + legend          |
-| `.target.md`  | Output configuration        | Key-value settings           |
+| Extension     | Purpose                          | Body Format                  |
+| ------------- | -------------------------------- | ---------------------------- |
+| `.palette.md` | Named colours and variants       | `$name: #hex` lines          |
+| `.brush.md`   | Glyph mappings + fill patterns   | Glyph mappings + pattern grid |
+| `.stamp.md`   | Character → pixel mapping        | ASCII pixel grid             |
+| `.shader.md`  | Palette + lighting + effects     | Key-value settings           |
+| `.shape.md`   | Drawable ASCII compositions      | ASCII art                    |
+| `.prefab.md`  | Shape compositions               | ASCII grid + legend          |
+| `.map.md`     | Level layouts                    | ASCII grid + legend          |
+| `.target.md`  | Output configuration             | Key-value settings           |
 
 ### Common Structure
 
-All files follow:
+Each definition follows this structure:
 
 ````markdown
 ---
-yaml frontmatter
+yaml frontmatter (name, tags, etc.)
 ---
 
 ```px
 body content (pixel/layout grids)
 ```
-
----
-optional legend (prefab/map only)
 ````
 
 The `px` code fence renders properly in markdown viewers (Hugo, Obsidian) and enables syntax highlighting.
 
-Multiple definitions per file allowed, separated by `---` with `name:` in each frontmatter.
+#### Multiple Definitions
+
+Files can contain multiple definitions. Each definition starts with a YAML frontmatter block containing at least `name:`:
+
+````markdown
+---
+name: first-item
+---
+
+```px
+...
+```
+
+---
+name: second-item
+---
+
+```px
+...
+```
+````
+
+#### Legend Footer (Prefab/Map only)
+
+Prefab and map files include a legend section after the code block, separated by `---`:
+
+````markdown
+---
+name: level-1
+tags: #level
+---
+
+```px
+##T##
+#   #
+#####
+```
+
+---
+#: wall
+T: tower
+" ": empty
+````
+
+The legend maps single characters to shape or prefab names. Use quotes for special characters like space.
 
 ---
 
@@ -69,9 +110,23 @@ $fill: $mid
 
 ### Brush
 
+Brushes define glyph→stamp mappings, grid size, and optional fill patterns.
+
 ````markdown
 ---
-name: checker
+name: default
+grid_size: 8x8
+inherits: builtin
+---
++: corner
+-: edge-h
+|: edge-v
+B: brick
+" ": { pattern: solid, color: $fill }
+x: transparent
+
+---
+name: checker-pattern
 ---
 
 ```px
@@ -82,9 +137,18 @@ BA
 
 **Rules:**
 
-- Body is the tile pattern
-- Letters (`A`, `B`, etc.) bind to colors at render time via style
+- `grid_size`: Expected stamp size (`8x8`, `16x16`, or `auto` for variable)
+- Glyph mappings: `char: stamp-name` or inline `{ pattern: name, color: $x }`
+- Pattern body (optional): ASCII grid for custom fill patterns
+- Letters in patterns (`A`, `B`) bind to colours via shader
+- Inheritance: `inherits: other-brush`
 - Builtins: `solid`, `checker`, `diagonal-l`, `diagonal-r`, `noise`
+
+**Brush resolution:**
+
+1. Shapes use `default` brush unless they specify `brush: name`
+2. Maps/prefabs can set `brush: name` for all children
+3. Shapes inherit brush from parent map/prefab if not specified
 
 ---
 
@@ -108,32 +172,43 @@ $$$$$$$$
 
 - `glyph` is the character typed in shapes/prefabs/maps
 - Body defines pixels; dimensions are the stamp size
-- `$` = edge color, `.` = fill color, `x` = transparent (configurable per style)
-- Stamps can be any size; blended when drawn
+- `$` = edge colour, `.` = fill colour, `x` = transparent
+- Stamps can be any size; padded/clipped to grid_size if set in brush
 
 ---
 
-### Style
+### Shader
+
+Shaders define palette binding, lighting, and layer effects applied at render time.
 
 ```yaml
 ---
-name: brick-red
+name: dungeon-dark
 palette: dungeon
+palette_variant: dark-mode
 ---
-+: corner
--: edge-h
-|: edge-v
-B: brick
-" ": { brush: solid, color: $fill }
-x: transparent
+lighting: ambient
+ambient_color: $dark
+effects:
+  - type: vignette
+    strength: 0.3
+  - type: scanlines
+    opacity: 0.1
 ```
 
 **Rules:**
 
-- Maps glyphs to stamps or inline definitions
-- `palette:` required; can include variant: `dungeon@light-mode`
-- Inheritance: `inherits: other-style`
-- Inline brush: `{ brush: name, color: $x }` or `{ brush: name, colors: [$a, $b] }`
+- `palette`: Required; which palette to use for colour resolution
+- `palette_variant`: Optional; activates a `@variant` block from the palette
+- `lighting`: Optional; lighting model (`ambient`, `directional`, etc.)
+- `effects`: Optional; list of post-processing effects
+- Inheritance: `inherits: other-shader`
+
+**Shader resolution:**
+
+1. CLI flag `--shader=name` overrides all
+2. Maps/prefabs can set `shader: name`
+3. Falls back to `default` shader (just uses `default` palette)
 
 ---
 
@@ -155,10 +230,10 @@ tags: #wall #solid
 
 **Rules:**
 
-- No style in definition — applied at render
+- `brush`: Optional; which brush to use (defaults to `default`, or inherits from parent)
 - `tags` for metadata export
-- Each character resolved via style's glyph mappings
-- Output size = sum of stamp sizes (variable)
+- Each character resolved via brush's glyph mappings
+- Output size = sum of stamp sizes (variable with `grid_size: auto`)
 
 ---
 
@@ -270,14 +345,32 @@ sheet: auto
 |`x`|`transparent`|1×1|Transparent pixel|
 ||`space`|1×1|Fill-color pixel (default)|
 
-### Builtin Brushes
+### Builtin Brush
+
+The `default` brush includes all builtin stamp mappings:
+
+```yaml
+---
+name: default
+grid_size: auto
+---
++: corner
+-: edge-h
+|: edge-v
+#: solid
+.: fill
+x: transparent
+" ": space
+```
+
+### Builtin Patterns
 
 |Name|Pattern|Description|
 |---|---|---|
-|`solid`|—|Single color fill|
+|`solid`|—|Single colour fill|
 |`checker`|`AB`/`BA`|2×2 checkerboard|
 |`diagonal-r`|`AB`/`BA` offset|Diagonal lines (/)|
-|`diagonal-l`|`BA`/`AB` offset|Diagonal lines ()|
+|`diagonal-l`|`BA`/`AB` offset|Diagonal lines (\)|
 |`h-line`|`A`/`B`|Horizontal stripes|
 |`v-line`|`AB`|Vertical stripes|
 
@@ -293,14 +386,14 @@ $edge: $black
 $fill: $white
 ```
 
-### Builtin Style
+### Builtin Shader
 
 ```yaml
 ---
 name: default
 palette: default
 ---
-# Uses all builtin stamps with builtin palette
+# No effects, just palette binding
 ```
 
 ---
@@ -338,10 +431,10 @@ Enough for a game to build collision maps or tile lookups. Richer codegen (Rust 
 **Phase 1: Core Pipeline**
 
 1. File parser (YAML frontmatter + body extraction)
-2. Palette loading and color resolution
+2. Palette loading and colour resolution
 3. Stamp loading and pixel grid parsing
-4. Style loading and glyph→stamp binding
-5. Shape rendering (ASCII → pixels via style)
+4. Brush loading and glyph→stamp binding
+5. Shape rendering (ASCII → pixels via brush)
 6. PNG output (single shape)
 
 **Phase 2: Composition**
@@ -351,12 +444,12 @@ Enough for a game to build collision maps or tile lookups. Richer codegen (Rust 
 3. Sprite sheet packing
 4. JSON metadata export
 
-**Phase 3: Variants & Targets**
+**Phase 3: Shaders & Targets**
 
-1. Palette variants (`@light-mode`)
-2. Style inheritance
+1. Shader loading and palette binding
+2. Palette variants (`@light-mode`)
 3. Target profiles (PICO-8 format, scaling, etc.)
-4. Build command with `--target`, `--variant`, `--style` flags
+4. Build command with `--target`, `--shader`, `--brush` flags
 
 **Phase 4: Polish**
 
@@ -380,32 +473,41 @@ Enough for a game to build collision maps or tile lookups. Richer codegen (Rust 
 
 ```rust
 struct Palette {
-    colors: HashMap<String, Rgba>,
+    colours: HashMap<String, Rgba>,
     variants: HashMap<String, HashMap<String, Rgba>>,
 }
 
 struct Stamp {
-    glyph: String,
-    pixels: Vec<Vec<PixelType>>, // Edge, Fill, Transparent, Color(idx)
+    glyph: char,
+    pixels: Vec<Vec<PixelType>>, // Edge, Fill, Transparent, Colour(idx)
 }
 
-struct Style {
+struct Brush {
+    grid_size: Option<(u32, u32)>,  // None = auto
+    glyphs: HashMap<char, StampRef>,
+    patterns: HashMap<String, Pattern>,
+}
+
+struct Shader {
     palette: String,
     variant: Option<String>,
-    glyphs: HashMap<char, StampRef>,
+    effects: Vec<Effect>,
 }
 
 struct Shape {
     name: String,
     tags: Vec<String>,
-    grid: Vec<Vec<char>>, // resolved via style at render time
+    brush: Option<String>,  // inherits from parent if None
+    grid: Vec<Vec<char>>,
 }
 ```
 
 **Rendering pipeline:**
 
 ```
-Shape.grid + Style → Vec<Vec<Stamp>> → Vec<Vec<Rgba>> → Image
+Shape.grid + Brush → Vec<Vec<Stamp>> → Vec<Vec<PixelType>> + Shader → Vec<Vec<Rgba>> → Image
 ```
 
-Each cell in the grid maps to a stamp, stamps expand to pixels, pixels get final colors from palette.
+1. Brush resolves glyphs to stamps
+2. Stamps expand to pixel tokens
+3. Shader applies palette colours and effects

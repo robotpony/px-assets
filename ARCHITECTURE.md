@@ -22,8 +22,9 @@ Source Files → Parser → Asset Registry → Renderer → Output Writers
 | Palette | Named colours + variants + expressions | None |
 | Brush | Fill patterns (tiling) | None |
 | Stamp | Glyph → pixel grid mapping | None |
-| Style | Binds palette + stamps + grid config | Palette, Stamps, Brushes |
-| Shape | ASCII composition | None (resolved via Style) |
+| Brush | Glyph mappings + patterns + grid config | Stamps |
+| Shader | Palette binding + effects | Palette |
+| Shape | ASCII composition | None (resolved via Brush) |
 | Prefab | Shape/prefab placement grid | Shapes, other Prefabs |
 | Map | Level layout (semantic prefab) | Shapes, Prefabs |
 | Target | Output configuration | None |
@@ -31,11 +32,11 @@ Source Files → Parser → Asset Registry → Renderer → Output Writers
 ### Dependency Graph
 
 ```
-Palette ─────────────────────┐
-                             │
-Brush ───────────────────────┼──→ Style ──→ Renderer
-                             │        ↑
-Stamp ───────────────────────┘        │
+Palette ──────────────────────────────→ Shader ──┐
+                                                 │
+Brush ────────────────────────────────────────── ┼──→ Renderer
+      ↑                                          │
+Stamp ┘                                          │
                                       │
 Shape ────────────────────────────────┤
                                       │
@@ -88,7 +89,8 @@ struct AssetRegistry {
     palettes: HashMap<String, Palette>,
     brushes: HashMap<String, Brush>,
     stamps: HashMap<String, Stamp>,
-    styles: HashMap<String, Style>,
+    brushes: HashMap<String, Brush>,
+    shaders: HashMap<String, Shader>,
     shapes: HashMap<String, Shape>,
     prefabs: HashMap<String, Prefab>,
     maps: HashMap<String, Map>,
@@ -97,7 +99,7 @@ struct AssetRegistry {
 ```
 
 Validation:
-- Resolve all references (palette → colours, style → stamps, etc.)
+- Resolve all references (brush → stamps, shader → palette, etc.)
 - Apply inheritance chains
 - Warn on missing refs (substitute placeholders)
 - Compute colour expressions
@@ -106,16 +108,16 @@ Validation:
 
 ```rust
 // Core rendering pipeline
-fn render(shape: &Shape, style: &Style, registry: &AssetRegistry) -> RenderResult {
-    let grid = resolve_stamps(&shape.grid, style);  // char → Stamp
-    let pixels = expand_stamps(grid, style);         // stamps → pixels
-    let colored = apply_palette(pixels, style);      // tokens → RGBA
+fn render(shape: &Shape, brush: &Brush, shader: &Shader, registry: &AssetRegistry) -> RenderResult {
+    let grid = resolve_stamps(&shape.grid, brush);   // char → Stamp
+    let pixels = expand_stamps(grid, brush);          // stamps → pixels
+    let colored = apply_shader(pixels, shader);       // tokens → RGBA + effects
     RenderResult { pixels: colored, metadata: ... }
 }
 ```
 
-**Stamp sizing** is configurable per style:
-- Style declares `grid_size: 8x8` (or auto)
+**Stamp sizing** is configurable per brush:
+- Brush declares `grid_size: 8x8` (or auto)
 - Stamps pad (centre) or clip to fit grid
 - Variable-size stamps supported when `grid_size: auto`
 
@@ -171,7 +173,7 @@ fn evaluate(expr: &ColorExpr, palette: &Palette) -> Rgba;
 
 ```rust
 struct StampResolver {
-    style: Style,
+    brush: Brush,
     stamps: HashMap<String, Stamp>,
     grid_size: Option<(u32, u32)>,  // None = variable
 }
@@ -215,7 +217,7 @@ struct BuildContext {
 }
 
 enum Warning {
-    MissingStamp { glyph: char, style: String, location: Location },
+    MissingStamp { glyph: char, brush: String, location: Location },
     MissingColour { name: String, palette: String, location: Location },
     StampSizeMismatch { stamp: String, expected: (u32, u32), actual: (u32, u32) },
     // ...
@@ -255,7 +257,8 @@ src/
 │   ├── frontmatter.rs
 │   ├── palette.rs
 │   ├── stamp.rs
-│   ├── style.rs
+│   ├── brush.rs
+│   ├── shader.rs
 │   ├── shape.rs
 │   ├── prefab.rs
 │   ├── map.rs
@@ -298,14 +301,16 @@ src/
 sources:
   - palettes/
   - stamps/
-  - styles/
+  - brushes/
+  - shaders/
   - shapes/
   - prefabs/
   - maps/
   - targets/
 
 defaults:
-  style: default
+  brush: default
+  shader: default
   target: web
 
 output:
@@ -397,7 +402,7 @@ Legend:            C: tower-cap
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Error handling | Warn and continue | Better UX during iteration; see all issues at once |
-| Stamp sizing | Configurable per style | Balance between simplicity and flexibility |
+| Stamp sizing | Configurable per brush | Balance between simplicity and flexibility |
 | Colour expressions | Full support | Enables sophisticated palette variations |
 | Cache strategy | Content-hash based | More reliable than mtime for CI/CD |
 | Parallelism | Rayon work-stealing | Good default for mixed workloads |

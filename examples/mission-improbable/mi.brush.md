@@ -1,9 +1,11 @@
 ---
 name: mi
-palette: mi
 inherits: default
 grid_size: auto
 ---
+
+<!-- The character on the left is mapped to the internal primitive on the right -->
+
 +: corner
 -: edge-h
 |: edge-v
