@@ -11,6 +11,9 @@ tags: #player
 ```
 
 ---
+o: fill
+
+---
 name: player-walk-1
 tags: #player
 ---
@@ -23,6 +26,11 @@ tags: #player
 ```
 
 ---
+o: fill
+/: edge-v
+\: edge-v
+
+---
 name: player-walk-2
 tags: #player
 ---
@@ -33,3 +41,8 @@ tags: #player
 +  +
 \/
 ```
+
+---
+o: fill
+/: edge-v
+\: edge-v

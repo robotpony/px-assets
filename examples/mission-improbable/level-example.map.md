@@ -1,7 +1,6 @@
 ---
 name: level-example
 tags: #level #test
-brush: mi
 shader: mi
 ---
 

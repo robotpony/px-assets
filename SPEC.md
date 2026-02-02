@@ -110,23 +110,11 @@ $fill: $mid
 
 ### Brush
 
-Brushes define glyph→stamp mappings, grid size, and optional fill patterns.
+Brushes are pixel patterns with positional colour tokens. Unlike stamps (which use semantic tokens like `$` and `.`), brushes use letters (`A`, `B`, `C`) that are bound to colours at usage time.
 
 ````markdown
 ---
-name: default
-grid_size: 8x8
-inherits: builtin
----
-+: corner
--: edge-h
-|: edge-v
-B: brick
-" ": { pattern: solid, color: $fill }
-x: transparent
-
----
-name: checker-pattern
+name: checker
 ---
 
 ```px
@@ -137,18 +125,34 @@ BA
 
 **Rules:**
 
-- `grid_size`: Expected stamp size (`8x8`, `16x16`, or `auto` for variable)
-- Glyph mappings: `char: stamp-name` or inline `{ pattern: name, color: $x }`
-- Pattern body (optional): ASCII grid for custom fill patterns
-- Letters in patterns (`A`, `B`) bind to colours via shader
-- Inheritance: `inherits: other-brush`
-- Builtins: `solid`, `checker`, `diagonal-l`, `diagonal-r`, `noise`
+- Body defines a pixel pattern grid
+- Letters (`A`, `B`, etc.) are bound to palette colours at usage
+- Builtins: `solid`, `checker`, `diagonal-l`, `diagonal-r`, `h-line`, `v-line`, `noise`
 
-**Brush resolution:**
+**Brush vs Stamp:**
 
-1. Shapes use `default` brush unless they specify `brush: name`
-2. Maps/prefabs can set `brush: name` for all children
-3. Shapes inherit brush from parent map/prefab if not specified
+| | Brush | Stamp |
+|---|-------|-------|
+| Tokens | Positional (`A`, `B`, `C`) | Semantic (`$`, `.`, `x`) |
+| Colour binding | At usage time | Via palette/shader |
+| Default glyph | No | Yes (`glyph: B`) |
+
+**Application modes:**
+
+Both brushes and stamps can be placed once (stamp mode) or tiled (fill mode):
+
+```yaml
+# Stamps - semantic colours from palette
+B: brick                                    # single placement (shorthand)
+B: { stamp: brick }                         # single placement (explicit)
+~: { fill: brick }                          # tiled fill
+
+# Brushes - colours bound at usage
+C: { stamp: checker, A: $edge, B: $fill }  # single placement
+~: { fill: checker, A: $edge, B: $fill }   # tiled fill
+```
+
+Unbound tokens default to transparent.
 
 ---
 
@@ -214,6 +218,8 @@ effects:
 
 ### Shape
 
+Shapes are ASCII compositions that reference stamps via glyph characters.
+
 ````markdown
 ---
 name: wall-segment
@@ -226,14 +232,27 @@ tags: #wall #solid
 |BB|
 +--+
 ```
+
+---
+B: brick
+~: { fill: checker, A: $edge, B: $fill }
 ````
 
 **Rules:**
 
-- `brush`: Optional; which brush to use (defaults to `default`, or inherits from parent)
+- Body uses characters that map to stamps or brushes
+- **Legend** (after `---`) defines local glyph mappings
+- Stamps declare default glyphs; legend can override or add mappings
 - `tags` for metadata export
-- Each character resolved via brush's glyph mappings
-- Output size = sum of stamp sizes (variable with `grid_size: auto`)
+- Legend syntax supports both placement modes:
+  - Single: `B: brick` or `B: { stamp: brick }`
+  - Tiled: `~: { fill: checker, A: $edge, B: $fill }`
+
+**Glyph resolution order:**
+
+1. Shape's legend (local overrides)
+2. Stamp's declared glyph (`glyph: B` in stamp file)
+3. Builtin defaults (`+`, `-`, `|`, `#`, `.`, `x`)
 
 ---
 
@@ -345,25 +364,7 @@ sheet: auto
 |`x`|`transparent`|1×1|Transparent pixel|
 ||`space`|1×1|Fill-color pixel (default)|
 
-### Builtin Brush
-
-The `default` brush includes all builtin stamp mappings:
-
-```yaml
----
-name: default
-grid_size: auto
----
-+: corner
--: edge-h
-|: edge-v
-#: solid
-.: fill
-x: transparent
-" ": space
-```
-
-### Builtin Patterns
+### Builtin Brushes (Patterns)
 
 |Name|Pattern|Description|
 |---|---|---|

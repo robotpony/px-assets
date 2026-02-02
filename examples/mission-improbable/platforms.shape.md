@@ -19,6 +19,9 @@ tags: #platform #solid
 ```
 
 ---
+=: edge-h
+
+---
 name: platform-right
 tags: #platform #solid
 ---

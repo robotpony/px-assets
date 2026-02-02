@@ -1,19 +1,17 @@
 ---
-name: mi
-inherits: default
-grid_size: auto
+name: mi-checker
 ---
 
-<!-- The character on the left is mapped to the internal primitive on the right -->
+```px
+AB
+BA
+```
 
-+: corner
--: edge-h
-|: edge-v
-#: solid
-.: fill
-x: transparent
-" ": transparent
-o: fill
-/: edge-v
-\: edge-v
-=: edge-h
+---
+name: mi-stripe
+---
+
+```px
+A
+B
+```

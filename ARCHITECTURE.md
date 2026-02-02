@@ -17,33 +17,51 @@ Source Files → Parser → Asset Registry → Renderer → Output Writers
 
 ### Asset Types
 
-| Type | Purpose | Dependencies |
-|------|---------|--------------|
-| Palette | Named colours + variants + expressions | None |
-| Brush | Fill patterns (tiling) | None |
-| Stamp | Glyph → pixel grid mapping | None |
-| Brush | Glyph mappings + patterns + grid config | Stamps |
-| Shader | Palette binding + effects | Palette |
-| Shape | ASCII composition | None (resolved via Brush) |
-| Prefab | Shape/prefab placement grid | Shapes, other Prefabs |
-| Map | Level layout (semantic prefab) | Shapes, Prefabs |
-| Target | Output configuration | None |
+**Primitives** (pixel-level definitions):
+
+| Type | Purpose | Key Difference |
+|------|---------|----------------|
+| Palette | Named colours + variants + expressions | Colour definitions |
+| Brush | Pixel pattern for tiled fills | No glyph (anonymous) |
+| Stamp | Pixel pattern with glyph assignment | Has glyph (`glyph: B`) |
+
+A **Stamp** is a **Brush** with a character assigned to it.
+
+**Composition** (layout definitions):
+
+| Type | Purpose | Legend Maps To |
+|------|---------|----------------|
+| Shape | ASCII art using stamps | Stamps (char → stamp) |
+| Prefab | Grid of shapes/prefabs | Shapes/Prefabs |
+| Map | Level layout (semantic prefab) | Shapes/Prefabs |
+
+All three use **unified legend syntax** for character mappings.
+
+**Rendering** (output configuration):
+
+| Type | Purpose |
+|------|---------|
+| Shader | Palette binding + lighting + effects |
+| Target | Output format, scale, sheet size |
 
 ### Dependency Graph
 
 ```
-Palette ──────────────────────────────→ Shader ──┐
-                                                 │
-Brush ────────────────────────────────────────── ┼──→ Renderer
-      ↑                                          │
-Stamp ┘                                          │
-                                      │
-Shape ────────────────────────────────┤
-                                      │
-Prefab ──→ (contains Shapes/Prefabs) ─┤
-                                      │
-Map ─────→ (contains Shapes/Prefabs) ─┘
+Palette ────────────────→ Shader ─────────────────┐
+                                                  │
+Brush (anonymous) ───┐                            │
+                     ├──→ Shape ──┬──→ Prefab ────┼──→ Renderer
+Stamp (glyphed) ─────┘            │               │
+                                  └──→ Map ───────┘
+                                        │
+                                      Target
 ```
+
+- **Brush/Stamp** define pixels
+- **Shape** uses stamps (via legend)
+- **Prefab/Map** compose shapes (via legend)
+- **Shader** applies palette + effects
+- **Target** controls output format
 
 ## Data Flow
 
