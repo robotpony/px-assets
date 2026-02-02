@@ -19,13 +19,13 @@ Source Files → Parser → Asset Registry → Renderer → Output Writers
 
 **Primitives** (pixel-level definitions):
 
-| Type | Purpose | Key Difference |
-|------|---------|----------------|
-| Palette | Named colours + variants + expressions | Colour definitions |
-| Brush | Pixel pattern for tiled fills | No glyph (anonymous) |
-| Stamp | Pixel pattern with glyph assignment | Has glyph (`glyph: B`) |
+| Type | Purpose | Tokens |
+|------|---------|--------|
+| Palette | Named colours + variants + expressions | `$name: #hex` |
+| Brush | Tiling pattern | Positional: `A`, `B`, `C` |
+| Stamp | Pixel art with default glyph | Semantic: `$`, `.`, `x` |
 
-A **Stamp** is a **Brush** with a character assigned to it.
+**Key distinction**: Stamps use semantic tokens bound to palette (`$edge`, `$fill`). Brushes use positional tokens bound at usage time (`A: $dark, B: $light`).
 
 **Composition** (layout definitions):
 
@@ -49,16 +49,17 @@ All three use **unified legend syntax** for character mappings.
 ```
 Palette ────────────────→ Shader ─────────────────┐
                                                   │
-Brush (anonymous) ───┐                            │
-                     ├──→ Shape ──┬──→ Prefab ────┼──→ Renderer
-Stamp (glyphed) ─────┘            │               │
-                                  └──→ Map ───────┘
-                                        │
-                                      Target
+Brush (pattern) ────┐                             │
+                    ├──→ Shape ──┬──→ Prefab ─────┼──→ Renderer
+Stamp (pixel art) ──┘            │                │
+                                 └──→ Map ────────┘
+                                       │
+                                     Target
 ```
 
-- **Brush/Stamp** define pixels
-- **Shape** uses stamps (via legend)
+- **Brush** defines tiling patterns (positional tokens)
+- **Stamp** defines pixel art with default glyph (semantic tokens)
+- **Shape** uses stamps/brushes (via legend + stamp glyph defaults)
 - **Prefab/Map** compose shapes (via legend)
 - **Shader** applies palette + effects
 - **Target** controls output format
@@ -107,7 +108,6 @@ struct AssetRegistry {
     palettes: HashMap<String, Palette>,
     brushes: HashMap<String, Brush>,
     stamps: HashMap<String, Stamp>,
-    brushes: HashMap<String, Brush>,
     shaders: HashMap<String, Shader>,
     shapes: HashMap<String, Shape>,
     prefabs: HashMap<String, Prefab>,
@@ -126,18 +126,22 @@ Validation:
 
 ```rust
 // Core rendering pipeline
-fn render(shape: &Shape, brush: &Brush, shader: &Shader, registry: &AssetRegistry) -> RenderResult {
-    let grid = resolve_stamps(&shape.grid, brush);   // char → Stamp
-    let pixels = expand_stamps(grid, brush);          // stamps → pixels
-    let colored = apply_shader(pixels, shader);       // tokens → RGBA + effects
+fn render(shape: &Shape, shader: &Shader, registry: &AssetRegistry) -> RenderResult {
+    let resolved = resolve_glyphs(&shape.grid, &shape.legend, registry);  // char → Stamp/Brush
+    let pixels = expand_to_pixels(resolved);                               // stamps → pixels
+    let colored = apply_shader(pixels, shader);                            // tokens → RGBA
     RenderResult { pixels: colored, metadata: ... }
 }
 ```
 
-**Stamp sizing** is configurable per brush:
-- Brush declares `grid_size: 8x8` (or auto)
-- Stamps pad (centre) or clip to fit grid
-- Variable-size stamps supported when `grid_size: auto`
+**Glyph resolution** uses the registry to find stamps/brushes:
+1. Check shape's legend for local override
+2. Check stamps for matching `glyph:` declaration
+3. Fall back to builtin stamps
+
+**Stamp sizing** is controlled by target:
+- Target declares `tile: 8x8` (or omit for native size)
+- Stamps pad (centre) or clip to fit during output
 
 ### 5. Output Phase
 
@@ -187,18 +191,27 @@ enum ColorExpr {
 fn evaluate(expr: &ColorExpr, palette: &Palette) -> Rgba;
 ```
 
-### Stamp Resolver
+### Glyph Resolver
 
 ```rust
-struct StampResolver {
-    brush: Brush,
+struct GlyphResolver {
     stamps: HashMap<String, Stamp>,
-    grid_size: Option<(u32, u32)>,  // None = variable
+    brushes: HashMap<String, Brush>,
+    builtins: HashMap<char, Stamp>,
 }
 
-impl StampResolver {
-    fn resolve(&self, glyph: char) -> ResolvedStamp;
-    fn pad_to_grid(&self, stamp: &Stamp) -> Stamp;
+impl GlyphResolver {
+    /// Resolve a glyph to a stamp/brush using resolution order:
+    /// 1. Shape's legend (passed in)
+    /// 2. Stamp's declared glyph
+    /// 3. Builtin defaults
+    fn resolve(&self, glyph: char, legend: &Legend) -> ResolvedGlyph;
+}
+
+enum ResolvedGlyph {
+    Stamp(Stamp),
+    Brush { pattern: Brush, colors: HashMap<char, ColorRef> },
+    Fill { pattern: Brush, colors: HashMap<char, ColorRef> },
 }
 ```
 
@@ -235,7 +248,7 @@ struct BuildContext {
 }
 
 enum Warning {
-    MissingStamp { glyph: char, brush: String, location: Location },
+    MissingStamp { glyph: char, shape: String, location: Location },
     MissingColour { name: String, palette: String, location: Location },
     StampSizeMismatch { stamp: String, expected: (u32, u32), actual: (u32, u32) },
     // ...
@@ -371,8 +384,8 @@ dither: ordered
 ### Shape → Pixels
 
 ```
-Input:        +--+
-              |BB|
+Input:        +--+        Legend:
+              |BB|        B: brick
               |BB|
               +--+
 
@@ -381,20 +394,30 @@ Input:        +--+
               ['|', 'B', 'B', '|']
               ['+', '-', '-', '+']
 
-2. Resolve:   [corner, edge-h, edge-h, corner]
+2. Resolve:   Legend: B → brick (local override)
+              Builtin: +, -, | → corner, edge-h, edge-v
+
+              [corner, edge-h, edge-h, corner]
               [edge-v, brick,  brick,  edge-v]
               [edge-v, brick,  brick,  edge-v]
               [corner, edge-h, edge-h, corner]
 
 3. Expand:    Each stamp expands to its pixel grid
-              (1x1 stamps = 1px, 8x8 brick = 8x8px)
+              (1x1 builtins = 1px, 8x4 brick = 8x4px)
 
 4. Colorize:  $ → palette.$edge
               . → palette.$fill
               x → transparent
-              A/B → brush pattern colours
 
 Output:       Final RGBA pixel buffer
+```
+
+For brush fills (e.g., `~: { fill: checker, A: $edge, B: $fill }`):
+
+```
+1. Resolve glyph to brush + colour binding
+2. Tile the brush pattern to fill the cell
+3. Map A/B tokens to bound colours
 ```
 
 ### Prefab/Map Composition

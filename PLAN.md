@@ -30,19 +30,15 @@ Phased approach from core parsing to full toolchain.
 - [ ] Support variants (`@variant-name:` blocks)
 - [ ] Support inheritance (`inherits:`)
 
-### 1.4 Stamp & Brush Loaders
+### 1.4 Stamp Loader
 
 - [ ] Parse stamp definitions (glyph + pixel grid)
-- [ ] Parse brush definitions (pattern grid)
 - [ ] Implement builtin stamps (corner, edge-h, edge-v, solid, fill, transparent)
-- [ ] Implement builtin brushes (solid, checker, diagonal-l/r, h-line, v-line)
 
 ### 1.5 Brush Loader
 
-- [ ] Parse glyph → stamp mappings
-- [ ] Parse inline pattern definitions
-- [ ] Support grid_size configuration
-- [ ] Support inheritance
+- [ ] Parse brush definitions (pattern grid with A/B tokens)
+- [ ] Implement builtin brushes (solid, checker, diagonal-l/r, h-line, v-line)
 
 ### 1.6 Shader Loader
 
@@ -50,23 +46,23 @@ Phased approach from core parsing to full toolchain.
 - [ ] Parse effects list
 - [ ] Support inheritance
 
-### 1.6 Shape Renderer
+### 1.7 Shape Renderer
 
 - [ ] Parse shape grid (ASCII body)
-- [ ] Resolve glyphs to stamps via brush
+- [ ] Parse shape legend (glyph overrides)
+- [ ] Implement glyph resolution (legend → stamp glyph → builtins)
 - [ ] Expand stamps to pixels
+- [ ] Handle brush fills with colour binding
 - [ ] Apply palette colours
-- [ ] Handle stamp padding/clipping for fixed grid_size
-- [ ] Handle variable stamp sizes (grid_size: auto)
 - [ ] Implement placeholder rendering for missing stamps (magenta)
 
-### 1.7 PNG Output
+### 1.8 PNG Output
 
 - [ ] Render shape to image buffer
 - [ ] Write PNG file
 - [ ] Implement scale factor (integer upscaling)
 
-### 1.8 Validation & Warnings
+### 1.9 Validation & Warnings
 
 - [ ] Collect warnings during build (missing refs, size mismatches)
 - [ ] Implement miette-style error formatting

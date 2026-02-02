@@ -1,5 +1,5 @@
 
-# px sprite and map pipeline generation (specificatoin)
+# px sprite and map pipeline generation (specification)
 
 #px01 #px #specification #draft
 
@@ -10,10 +10,10 @@
 | Extension     | Purpose                          | Body Format                  |
 | ------------- | -------------------------------- | ---------------------------- |
 | `.palette.md` | Named colours and variants       | `$name: #hex` lines          |
-| `.brush.md`   | Glyph mappings + fill patterns   | Glyph mappings + pattern grid |
-| `.stamp.md`   | Character → pixel mapping        | ASCII pixel grid             |
+| `.brush.md`   | Tiling patterns                  | Pixel grid with A/B tokens   |
+| `.stamp.md`   | Pixel art with default glyph     | Pixel grid with $/./x tokens |
 | `.shader.md`  | Palette + lighting + effects     | Key-value settings           |
-| `.shape.md`   | Drawable ASCII compositions      | ASCII art                    |
+| `.shape.md`   | Drawable ASCII compositions      | ASCII art + optional legend  |
 | `.prefab.md`  | Shape compositions               | ASCII grid + legend          |
 | `.map.md`     | Level layouts                    | ASCII grid + legend          |
 | `.target.md`  | Output configuration             | Key-value settings           |
@@ -56,9 +56,9 @@ name: second-item
 ```
 ````
 
-#### Legend Footer (Prefab/Map only)
+#### Legend Footer
 
-Prefab and map files include a legend section after the code block, separated by `---`:
+Shapes, prefabs, and maps can include a legend section after the code block:
 
 ````markdown
 ---
@@ -78,7 +78,37 @@ T: tower
 " ": empty
 ````
 
-The legend maps single characters to shape or prefab names. Use quotes for special characters like space.
+The legend maps single characters to stamps, brushes, shapes, or prefabs. Use quotes for special characters like space.
+
+**Legend scoping in multi-definition files:**
+
+Each legend applies to the definition immediately above it. A new `---` with `name:` starts a fresh definition:
+
+````markdown
+---
+name: shape-a
+---
+
+```px
+AB
+```
+
+---
+A: stamp-one
+B: stamp-two
+
+---
+name: shape-b
+---
+
+```px
+XY
+```
+
+---
+X: stamp-three
+Y: stamp-four
+````
 
 ---
 
@@ -243,7 +273,7 @@ B: brick
 - Body uses characters that map to stamps or brushes
 - **Legend** (after `---`) defines local glyph mappings
 - Stamps declare default glyphs; legend can override or add mappings
-- `tags` for metadata export
+- `tags` for metadata export (hashtag prefix is optional, stripped in output)
 - Legend syntax supports both placement modes:
   - Single: `B: brick` or `B: { stamp: brick }`
   - Tiled: `~: { fill: checker, A: $edge, B: $fill }`
@@ -434,8 +464,8 @@ Enough for a game to build collision maps or tile lookups. Richer codegen (Rust 
 1. File parser (YAML frontmatter + body extraction)
 2. Palette loading and colour resolution
 3. Stamp loading and pixel grid parsing
-4. Brush loading and glyph→stamp binding
-5. Shape rendering (ASCII → pixels via brush)
+4. Brush loading (pattern grids)
+5. Shape rendering (ASCII → pixels via glyph resolution)
 6. PNG output (single shape)
 
 **Phase 2: Composition**
@@ -479,14 +509,14 @@ struct Palette {
 }
 
 struct Stamp {
-    glyph: char,
-    pixels: Vec<Vec<PixelType>>, // Edge, Fill, Transparent, Colour(idx)
+    name: String,
+    glyph: Option<char>,              // Default glyph (self-declared)
+    pixels: Vec<Vec<PixelType>>,      // Edge, Fill, Transparent
 }
 
 struct Brush {
-    grid_size: Option<(u32, u32)>,  // None = auto
-    glyphs: HashMap<char, StampRef>,
-    patterns: HashMap<String, Pattern>,
+    name: String,
+    pixels: Vec<Vec<char>>,           // Pattern grid (A, B, C tokens)
 }
 
 struct Shader {
@@ -498,17 +528,29 @@ struct Shader {
 struct Shape {
     name: String,
     tags: Vec<String>,
-    brush: Option<String>,  // inherits from parent if None
     grid: Vec<Vec<char>>,
+    legend: HashMap<char, LegendEntry>,  // Local glyph overrides
+}
+
+enum LegendEntry {
+    StampRef(String),                           // B: brick
+    BrushRef { name: String, colors: HashMap<char, String> },  // { stamp: checker, A: $edge }
+    Fill { name: String, colors: HashMap<char, String> },      // { fill: checker, A: $edge }
 }
 ```
+
+**Glyph resolution order:**
+
+1. Shape's legend (local overrides)
+2. Stamp's declared glyph (`glyph: B` in stamp file)
+3. Builtin defaults (`+`, `-`, `|`, `#`, `.`, `x`, ` `)
 
 **Rendering pipeline:**
 
 ```
-Shape.grid + Brush → Vec<Vec<Stamp>> → Vec<Vec<PixelType>> + Shader → Vec<Vec<Rgba>> → Image
+Shape.grid + Legend + Stamps → Vec<Vec<Pixels>> + Shader → Vec<Vec<Rgba>> → Image
 ```
 
-1. Brush resolves glyphs to stamps
-2. Stamps expand to pixel tokens
+1. Resolve glyphs to stamps/brushes via legend and stamp defaults
+2. Expand stamps to pixel tokens (or tile brushes for fills)
 3. Shader applies palette colours and effects

@@ -212,22 +212,9 @@ $ghost: alpha($fill, 0.5)
 
 ### Brush (`.brush.md`)
 
-Brushes define glyph→stamp mappings and optional fill patterns.
+Brushes define tiling patterns with positional colour tokens.
 
 ````markdown
----
-name: default
-grid_size: auto
-inherits: builtin
----
-
-# Glyph mappings
-+: corner
--: edge-h
-|: edge-v
-B: brick
-" ": { pattern: solid, color: $fill }
-
 ---
 name: checker
 ---
@@ -236,18 +223,45 @@ name: checker
 AB
 BA
 ```
+
+---
+name: diagonal-r
+---
+
+```px
+AB
+BA
+```
+
+---
+name: h-line
+---
+
+```px
+A
+B
+```
 ````
 
 **Rules:**
 
-- `grid_size`: Expected stamp size (`8x8`, `16x16`, or `auto`)
-- Glyph mappings: `char: stamp-name` or inline `{ pattern: name, color: $x }`
-- Pattern definitions have a `px` body for the tile grid
-- Shapes use `default` brush unless overridden; inherit from parent map/prefab
+- Body defines a pixel pattern grid
+- Letters (`A`, `B`, etc.) are bound to palette colours at usage time
+- Used via legend syntax: `~: { fill: checker, A: $edge, B: $fill }`
 
 **Builtin patterns:** `solid`, `checker`, `diagonal-l`, `diagonal-r`, `h-line`, `v-line`, `noise`
 
+**Brush vs Stamp:**
+
+| | Brush | Stamp |
+|---|-------|-------|
+| Tokens | Positional (`A`, `B`, `C`) | Semantic (`$`, `.`, `x`) |
+| Colour binding | At usage time via legend | Via palette/shader |
+| Default glyph | No | Yes (`glyph: B`) |
+
 ### Stamp (`.stamp.md`)
+
+Stamps define pixel art with semantic colour tokens and an optional default glyph.
 
 ````markdown
 ---
@@ -263,6 +277,12 @@ $$$$$$$$
 ```
 ````
 
+**Rules:**
+
+- `glyph`: Optional default character for this stamp in shapes
+- Body defines pixels using semantic tokens
+- Stamps can be any size
+
 **Pixel tokens:**
 
 | Token | Meaning |
@@ -270,8 +290,12 @@ $$$$$$$$
 | `$` | Edge colour (`$edge` from palette) |
 | `.` | Fill colour (`$fill` from palette) |
 | `x` | Transparent |
-| `A-Z` | Brush pattern colours |
-| `0-9` | Direct palette index (indexed modes) |
+
+**Glyph resolution order:**
+
+1. Shape's legend (local override)
+2. Stamp's `glyph:` field (self-declared default)
+3. Builtin stamps (`+`, `-`, `|`, `#`, `.`, `x`, ` `)
 
 ### Shader (`.shader.md`)
 
@@ -298,11 +322,6 @@ effects:
 - `effects`: Optional; post-processing effects list
 - CLI flag `--shader=name` overrides; maps/prefabs can set `shader: name`
 
-**Grid size options:**
-
-- `8x8`, `16x16`, etc.: Fixed grid; stamps pad/clip to fit
-- `auto`: Variable stamp sizes; layout calculated dynamically
-
 ### Shape (`.shape.md`)
 
 ````markdown
@@ -317,9 +336,32 @@ tags: #wall #solid #collidable
 |BB|
 +--+
 ```
+
+---
+B: brick
+~: { fill: checker, A: $edge, B: $fill }
 ````
 
-Shapes use `default` brush unless `brush: name` is specified. Inherit brush from parent map/prefab.
+**Rules:**
+
+- Body uses characters that map to stamps or brushes
+- Optional legend (after `---`) defines local glyph overrides
+- Glyphs resolve via: legend → stamp's `glyph:` → builtins
+
+**Legend syntax:**
+
+```yaml
+# Stamps (single placement)
+B: brick                                    # shorthand
+B: { stamp: brick }                         # explicit
+
+# Brushes placed once (with colour binding)
+C: { stamp: checker, A: $edge, B: $fill }
+
+# Tiled fills
+~: { fill: brick }                          # stamp tiled
+~: { fill: checker, A: $edge, B: $fill }   # brush tiled
+```
 
 ### Prefab (`.prefab.md`)
 
@@ -415,6 +457,10 @@ frames: false                 # Single frame per shape
 | `png` | `scale`, `sheet`, `padding`, `metadata` |
 | `p8` | `sheet`, `tile`, `colors`, `palette_mode`, `dither`, `quantize` |
 | `aseprite` | `layers`, `frames`, `palette` |
+
+**Grid sizing:**
+
+The `tile` property (e.g., `tile: 8x8`) controls stamp sizing for targets that need fixed grids. Stamps are padded (centered) or clipped to fit. For variable-size output, omit `tile` or set `tile: auto`.
 
 ## Output Structure
 
