@@ -24,4 +24,12 @@ The same shape can be rendered with different palettes, at different scales, for
 
 ## Status
 
-Early development. See [SPEC.md](SPEC.md) for the planned DSL.
+**Phase 1.2 complete** - Parser infrastructure.
+
+- Document splitter for multi-definition files
+- YAML frontmatter extraction
+- Code block body extraction
+- Legend section parsing
+- Source location tracking for errors
+
+See [PLAN.md](PLAN.md) for progress and [SPEC.md](SPEC.md) for the DSL specification.

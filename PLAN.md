@@ -8,17 +8,17 @@ Phased approach from core parsing to full toolchain.
 
 ### 1.1 Project Setup
 
-- [ ] Initialize Cargo project with workspace structure
-- [ ] Configure dependencies (serde, image, clap, thiserror, miette)
-- [ ] Set up basic CLI skeleton (`px build`, `px validate`)
-- [ ] Create test fixtures directory with example files
+- [x] Initialize Cargo project with workspace structure
+- [x] Configure dependencies (serde, image, clap, thiserror, miette)
+- [x] Set up basic CLI skeleton (`px build`, `px validate`)
+- [x] Create test fixtures directory with example files
 
 ### 1.2 Parser Infrastructure
 
-- [ ] Implement document splitter (multi-doc per file)
-- [ ] Implement frontmatter extractor (YAML between `---`)
-- [ ] Implement legend extractor (after second `---`)
-- [ ] Add source location tracking for error messages
+- [x] Implement document splitter (multi-doc per file)
+- [x] Implement frontmatter extractor (YAML between `---`)
+- [x] Implement legend extractor (after second `---`)
+- [x] Add source location tracking for error messages
 
 ### 1.3 Palette Loader
 
