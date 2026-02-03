@@ -1,0 +1,25 @@
+[package]
+name = "px"
+version = "0.1.0"
+edition = "2021"
+description = "A CLI tool for generating sprites and sprite maps from text-based definitions"
+license = "MIT"
+
+[[bin]]
+name = "px"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+image = "0.25"
+miette = { version = "7", features = ["fancy"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+thiserror = "1"
+walkdir = "2"
+
+[dev-dependencies]
+insta = "1"
+pretty_assertions = "1"
+tempfile = "3"
