@@ -58,9 +58,9 @@ Phased approach from core parsing to full toolchain.
 
 ### 1.8 PNG Output
 
-- [ ] Render shape to image buffer
-- [ ] Write PNG file
-- [ ] Implement scale factor (integer upscaling)
+- [x] Render shape to image buffer
+- [x] Write PNG file
+- [x] Implement scale factor (integer upscaling)
 
 ### 1.9 Validation & Warnings
 

@@ -6,7 +6,14 @@ use thiserror::Error;
 pub enum PxError {
     #[error("IO error: {0}")]
     #[diagnostic(code(px::io))]
-    Io(#[from] std::io::Error),
+    IoError(#[from] std::io::Error),
+
+    #[error("IO error with {path}: {message}")]
+    #[diagnostic(code(px::io))]
+    Io {
+        path: std::path::PathBuf,
+        message: String,
+    },
 
     #[error("Parse error: {message}")]
     #[diagnostic(code(px::parse))]

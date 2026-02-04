@@ -25,6 +25,12 @@ fn parse_shape_document(doc: RawDocument) -> Result<Shape> {
     // Get tags
     let tags = doc.get_tags();
 
+    // Get scale from frontmatter
+    let scale = doc
+        .get_frontmatter("scale")
+        .and_then(|v| v.value.as_u64())
+        .map(|s| s as u32);
+
     // Parse ASCII grid from body
     let grid = if let Some(body) = &doc.body {
         parse_grid(&body.value)
@@ -35,7 +41,7 @@ fn parse_shape_document(doc: RawDocument) -> Result<Shape> {
     // Convert legend
     let legend = convert_legend(doc.legend);
 
-    Ok(Shape::new(name, tags, grid, legend))
+    Ok(Shape::with_scale(name, tags, grid, legend, scale))
 }
 
 /// Parse the ASCII grid from body content.
@@ -306,5 +312,42 @@ o: fill
         } else {
             panic!("Expected StampRef for 'o'");
         }
+    }
+
+    #[test]
+    fn test_parse_shape_with_scale() {
+        let source = r#"---
+name: scaled-shape
+scale: 4
+---
+
+```px
+##
+##
+```
+"#;
+
+        let shapes = parse_shape_file(source).unwrap();
+        let shape = &shapes[0];
+
+        assert_eq!(shape.name, "scaled-shape");
+        assert_eq!(shape.scale, Some(4));
+    }
+
+    #[test]
+    fn test_parse_shape_without_scale() {
+        let source = r#"---
+name: no-scale
+---
+
+```px
+#
+```
+"#;
+
+        let shapes = parse_shape_file(source).unwrap();
+        let shape = &shapes[0];
+
+        assert_eq!(shape.scale, None);
     }
 }

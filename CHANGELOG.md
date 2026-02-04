@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2026-02-03
+
+### Added
+
+- PNG output for rendered shapes
+  - `write_png()` function for writing shapes to PNG files
+  - `scale_pixels()` for nearest-neighbour integer upscaling
+  - `--scale` CLI argument for output scaling (default: 1)
+  - `scale:` frontmatter option in shape files (CLI overrides if > 1)
+- Functional `px build` command
+  - Processes `.shape.md` files
+  - Creates output directory automatically
+  - Supports `--shader` flag for shader selection
+  - Supports `--output` / `-o` for output directory
+  - Supports `--scale` for integer upscaling
+
 ## [0.8.0] - 2026-02-03
 
 ### Added

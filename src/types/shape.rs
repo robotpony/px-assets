@@ -38,6 +38,9 @@ pub struct Shape {
 
     /// Legend mappings (glyph -> stamp/brush reference).
     legend: HashMap<char, LegendEntry>,
+
+    /// Optional scale factor from frontmatter (1 = no scaling).
+    pub scale: Option<u32>,
 }
 
 /// A legend entry describing what a glyph maps to.
@@ -72,6 +75,24 @@ impl Shape {
             tags,
             grid,
             legend,
+            scale: None,
+        }
+    }
+
+    /// Create a new shape with scale.
+    pub fn with_scale(
+        name: impl Into<String>,
+        tags: Vec<String>,
+        grid: Vec<Vec<char>>,
+        legend: HashMap<char, LegendEntry>,
+        scale: Option<u32>,
+    ) -> Self {
+        Self {
+            name: name.into(),
+            tags,
+            grid,
+            legend,
+            scale,
         }
     }
 
