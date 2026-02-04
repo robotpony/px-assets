@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-02-03
+
+### Added
+
+- Colour expression system for palette definitions
+  - `ColourExpr` parser for function-style expressions
+  - `ExprEvaluator` for evaluating expressions against a palette
+  - `darken($colour, percent)` - reduce lightness in HSL space
+  - `lighten($colour, percent)` - increase lightness in HSL space
+  - `saturate($colour, percent)` - increase saturation
+  - `desaturate($colour, percent)` - decrease saturation
+  - `mix($colour1, $colour2, percent)` - blend two colours
+  - `alpha($colour, percent)` - set alpha channel
+  - Support for nested expressions: `darken(lighten($gold, 10%), 5%)`
+
+### Changed
+
+- `PaletteBuilder::define()` now parses colour expressions automatically
+
+### Dependencies
+
+- Added `palette` crate (0.7) for HSL colour space conversions
+
+## [0.3.0] - 2026-02-02
+
+### Added
+
+- Palette loader for `.palette.md` files
+  - `Colour` type with hex parsing (#RGB, #RGBA, #RRGGBB, #RRGGBBAA)
+  - `Palette` type with named colours and variants
+  - Colour reference resolution (`$edge: $dark`) with cycle detection
+  - Variant support (`@variant-name:` blocks)
+  - Palette inheritance (`inherits: parent-palette`)
+  - Builtin default palette with $black, $white, $edge, $fill
+- `PaletteBuilder` for constructing palettes from parsed definitions
+
 ## [0.2.0] - 2026-02-02
 
 ### Added

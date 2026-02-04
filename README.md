@@ -24,12 +24,23 @@ The same shape can be rendered with different palettes, at different scales, for
 
 ## Status
 
-**Phase 1.2 complete** - Parser infrastructure.
+**Phase 1.3 complete** - Palette loader with colour expressions.
 
-- Document splitter for multi-definition files
-- YAML frontmatter extraction
-- Code block body extraction
-- Legend section parsing
-- Source location tracking for errors
+- `Colour` type with hex parsing (#RGB, #RGBA, #RRGGBB, #RRGGBBAA)
+- `Palette` type with named colours
+- Colour reference resolution with cycle detection
+- Variant support (`@variant-name:` blocks)
+- Palette inheritance (`inherits:`)
+- Builtin default palette ($black, $white, $edge, $fill)
+- Colour expressions: `darken`, `lighten`, `saturate`, `desaturate`, `mix`, `alpha`
+
+```markdown
+$gold: #F7AD45
+$dark-gold: darken($gold, 20%)
+$highlight: lighten($gold, 30%)
+$muted: desaturate($gold, 50%)
+$blend: mix($gold, #FF0000, 30%)
+$transparent: alpha($gold, 50%)
+```
 
 See [PLAN.md](PLAN.md) for progress and [SPEC.md](SPEC.md) for the DSL specification.

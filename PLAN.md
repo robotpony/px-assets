@@ -22,13 +22,13 @@ Phased approach from core parsing to full toolchain.
 
 ### 1.3 Palette Loader
 
-- [ ] Parse colour definitions (`$name: #hex`)
-- [ ] Resolve references (`$edge: $dark`)
-- [ ] Implement colour expression parser (darken, lighten, etc.)
-- [ ] Implement colour expression evaluator
-- [ ] Add HSL conversion (via palette crate)
-- [ ] Support variants (`@variant-name:` blocks)
-- [ ] Support inheritance (`inherits:`)
+- [x] Parse colour definitions (`$name: #hex`)
+- [x] Resolve references (`$edge: $dark`)
+- [x] Implement colour expression parser (darken, lighten, etc.)
+- [x] Implement colour expression evaluator
+- [x] Add HSL conversion (via palette crate)
+- [x] Support variants (`@variant-name:` blocks)
+- [x] Support inheritance (`inherits:`)
 
 ### 1.4 Stamp Loader
 
