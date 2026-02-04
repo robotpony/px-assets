@@ -6,10 +6,12 @@
 pub mod cli;
 pub mod error;
 pub mod parser;
+pub mod registry;
 pub mod render;
 pub mod types;
 
 pub use error::{PxError, Result};
+pub use registry::{AssetId, AssetKind, AssetRegistry, RegistryBuilder};
 pub use render::{scale_pixels, write_png, RenderedShape, ShapeRenderer};
 pub use types::{
     Brush, BuiltinBrushes, BuiltinShaders, BuiltinStamps, Colour, ColourExpr, Effect, EffectParam,
