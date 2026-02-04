@@ -24,23 +24,25 @@ The same shape can be rendered with different palettes, at different scales, for
 
 ## Status
 
-**Phase 1.3 complete** - Palette loader with colour expressions.
+**Phase 1.4 complete** - Stamp loader.
 
-- `Colour` type with hex parsing (#RGB, #RGBA, #RRGGBB, #RRGGBBAA)
-- `Palette` type with named colours
-- Colour reference resolution with cycle detection
-- Variant support (`@variant-name:` blocks)
-- Palette inheritance (`inherits:`)
-- Builtin default palette ($black, $white, $edge, $fill)
-- Colour expressions: `darken`, `lighten`, `saturate`, `desaturate`, `mix`, `alpha`
+- Palettes with colour expressions (`darken`, `lighten`, `mix`, etc.)
+- Stamps with semantic pixel tokens (`$` edge, `.` fill, `x` transparent)
+- 7 builtin stamps: `corner`, `edge-h`, `edge-v`, `solid`, `fill`, `transparent`, `space`
 
-```markdown
-$gold: #F7AD45
-$dark-gold: darken($gold, 20%)
-$highlight: lighten($gold, 30%)
-$muted: desaturate($gold, 50%)
-$blend: mix($gold, #FF0000, 30%)
-$transparent: alpha($gold, 50%)
+````markdown
+# brick.stamp.md
+---
+name: brick
+glyph: B
+---
+
+```px
+$$$$$$$$
+$......$
+$......$
+$$$$$$$$
 ```
+````
 
 See [PLAN.md](PLAN.md) for progress and [SPEC.md](SPEC.md) for the DSL specification.

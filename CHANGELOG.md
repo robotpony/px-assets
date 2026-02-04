@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-02-03
+
+### Added
+
+- Stamp loader for `.stamp.md` files
+  - `Stamp` type with name, glyph, and pixel grid
+  - `PixelToken` enum for semantic pixels (Edge, Fill, Transparent)
+  - Stamp parser supporting multi-stamp files
+  - `BuiltinStamps` with 7 default stamps:
+    - `corner` (`+`) - edge pixel
+    - `edge-h` (`-`) - edge pixel
+    - `edge-v` (`|`) - edge pixel
+    - `solid` (`#`) - edge pixel
+    - `fill` (`.`) - fill pixel
+    - `transparent` (`x`) - transparent pixel
+    - `space` (` `) - fill pixel
+  - `Stamp::render()` for converting tokens to colours
+  - Support for variable-size stamps with pixel grid normalization
+
 ## [0.4.0] - 2026-02-03
 
 ### Added

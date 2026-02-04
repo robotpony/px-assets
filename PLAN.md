@@ -32,8 +32,8 @@ Phased approach from core parsing to full toolchain.
 
 ### 1.4 Stamp Loader
 
-- [ ] Parse stamp definitions (glyph + pixel grid)
-- [ ] Implement builtin stamps (corner, edge-h, edge-v, solid, fill, transparent)
+- [x] Parse stamp definitions (glyph + pixel grid)
+- [x] Implement builtin stamps (corner, edge-h, edge-v, solid, fill, transparent)
 
 ### 1.5 Brush Loader
 

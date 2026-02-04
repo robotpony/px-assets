@@ -29,16 +29,17 @@ mod frontmatter;
 mod legend;
 pub mod palette;
 pub mod span;
+pub mod stamp;
 pub mod types;
 
 // Re-export main entry points
 pub use document::parse_documents;
 pub use palette::parse_palette;
 pub use span::{Location, Span, Spanned};
+pub use stamp::parse_stamp_file;
 pub use types::{LegendValue, RawDocument};
 
 // Future parser modules for specific file types:
-// pub mod stamp;
 // pub mod brush;
 // pub mod shader;
 // pub mod shape;
