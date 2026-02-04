@@ -29,6 +29,8 @@ mod frontmatter;
 mod legend;
 pub mod brush;
 pub mod palette;
+pub mod shader;
+pub mod shape;
 pub mod span;
 pub mod stamp;
 pub mod types;
@@ -37,13 +39,13 @@ pub mod types;
 pub use brush::parse_brush_file;
 pub use document::parse_documents;
 pub use palette::parse_palette;
+pub use shader::parse_shader_file;
+pub use shape::parse_shape_file;
 pub use span::{Location, Span, Spanned};
 pub use stamp::parse_stamp_file;
 pub use types::{LegendValue, RawDocument};
 
 // Future parser modules for specific file types:
-// pub mod shader;
-// pub mod shape;
 // pub mod prefab;
 // pub mod map;
 // pub mod target;

@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0] - 2026-02-03
+
+### Added
+
+- Shape renderer for `.shape.md` files
+  - `Shape` type with name, tags, ASCII grid, and legend
+  - `LegendEntry` enum for stamp refs, brush refs, and fills
+  - Shape parser supporting multi-shape files
+  - `ShapeRenderer` for converting shapes to pixel grids
+  - `RenderedShape` with pixel buffer and RGBA export
+  - Glyph resolution order: legend → stamp glyph → builtins → magenta fallback
+  - Support for brush fills with coordinate-based tiling
+  - Palette variant support in rendering
+  - `to_rgba_buffer()` for image output preparation
+  - Tags parsed from frontmatter (space-separated with `#` prefix)
+
+## [0.7.0] - 2026-02-03
+
+### Added
+
+- Shader loader for `.shader.md` files
+  - `Shader` type for palette binding and effects configuration
+  - `ShaderBuilder` for constructing shaders from parsed definitions
+  - `Effect` enum with built-in effect types:
+    - `vignette` - darkens image edges
+    - `scanlines` - adds horizontal scan lines
+    - `brightness` - adjusts overall brightness
+    - `contrast` - adjusts contrast
+    - `Custom` - extensible for unknown effect types
+  - `EffectParam` for storing effect parameters
+  - Shader inheritance support (child shaders can inherit from parents)
+  - `BuiltinShaders` with default shader
+  - Effects parsed from YAML but not yet applied (rendering in Phase 1.7+)
+
 ## [0.6.0] - 2026-02-03
 
 ### Added

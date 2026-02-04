@@ -24,28 +24,32 @@ The same shape can be rendered with different palettes, at different scales, for
 
 ## Status
 
-**Phase 1.5 complete** - Brush loader.
+**Phase 1.7 complete** - Shape renderer.
 
 - Palettes with colour expressions (`darken`, `lighten`, `mix`, etc.)
 - Stamps with semantic pixel tokens (`$` edge, `.` fill, `x` transparent)
 - Brushes with positional colour tokens (`A`, `B`, `C`) for tiling patterns
+- Shaders for palette binding and post-processing effects
+- Shapes with ASCII grids and legend-based glyph resolution
 
-````markdown
-# checker.brush.md
+```markdown
+# player.shape.md
 ---
-name: checker
+name: player-stand
+tags: "#player"
 ---
 
-```px
-AB
-BA
-```
-````
+\`\`\`px
+ oo
+ ||
++  +
+|  |
+\`\`\`
 
-Brushes tile seamlessly and bind colours at usage time:
-
-```yaml
-~: { fill: checker, A: $edge, B: $fill }
+---
+o: head-fill
 ```
+
+Rendering resolves glyphs through: legend → stamp glyph → builtins → magenta fallback.
 
 See [PLAN.md](PLAN.md) for progress and [SPEC.md](SPEC.md) for the DSL specification.

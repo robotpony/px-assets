@@ -42,19 +42,19 @@ Phased approach from core parsing to full toolchain.
 
 ### 1.6 Shader Loader
 
-- [ ] Parse palette reference
-- [ ] Parse effects list
-- [ ] Support inheritance
+- [x] Parse palette reference
+- [x] Parse effects list
+- [x] Support inheritance
 
 ### 1.7 Shape Renderer
 
-- [ ] Parse shape grid (ASCII body)
-- [ ] Parse shape legend (glyph overrides)
-- [ ] Implement glyph resolution (legend → stamp glyph → builtins)
-- [ ] Expand stamps to pixels
-- [ ] Handle brush fills with colour binding
-- [ ] Apply palette colours
-- [ ] Implement placeholder rendering for missing stamps (magenta)
+- [x] Parse shape grid (ASCII body)
+- [x] Parse shape legend (glyph overrides)
+- [x] Implement glyph resolution (legend → stamp glyph → builtins)
+- [x] Expand stamps to pixels
+- [x] Handle brush fills with colour binding
+- [x] Apply palette colours
+- [x] Implement placeholder rendering for missing stamps (magenta)
 
 ### 1.8 PNG Output
 
