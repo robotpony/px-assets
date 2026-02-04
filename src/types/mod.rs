@@ -6,12 +6,15 @@
 //! - `ColourExpr` - Colour expressions (darken, lighten, mix, etc.)
 //! - `Stamp` - Pixel art patterns with semantic tokens
 //! - `PixelToken` - Semantic pixel values (edge, fill, transparent)
+//! - `Brush` - Tiling patterns with positional colour tokens
 
+mod brush;
 mod colour;
 mod expr;
 mod palette;
 mod stamp;
 
+pub use brush::{Brush, BuiltinBrushes};
 pub use colour::Colour;
 pub use expr::{ColourExpr, ExprEvaluator};
 pub use palette::{Palette, PaletteBuilder};

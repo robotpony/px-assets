@@ -9,4 +9,7 @@ pub mod parser;
 pub mod types;
 
 pub use error::{PxError, Result};
-pub use types::{BuiltinStamps, Colour, ColourExpr, ExprEvaluator, Palette, PixelToken, Stamp};
+pub use types::{
+    Brush, BuiltinBrushes, BuiltinStamps, Colour, ColourExpr, ExprEvaluator, Palette, PixelToken,
+    Stamp,
+};

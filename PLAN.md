@@ -37,8 +37,8 @@ Phased approach from core parsing to full toolchain.
 
 ### 1.5 Brush Loader
 
-- [ ] Parse brush definitions (pattern grid with A/B tokens)
-- [ ] Implement builtin brushes (solid, checker, diagonal-l/r, h-line, v-line)
+- [x] Parse brush definitions (pattern grid with A/B tokens)
+- [x] Implement builtin brushes (solid, checker, diagonal-l/r, h-line, v-line)
 
 ### 1.6 Shader Loader
 

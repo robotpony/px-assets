@@ -24,25 +24,28 @@ The same shape can be rendered with different palettes, at different scales, for
 
 ## Status
 
-**Phase 1.4 complete** - Stamp loader.
+**Phase 1.5 complete** - Brush loader.
 
 - Palettes with colour expressions (`darken`, `lighten`, `mix`, etc.)
 - Stamps with semantic pixel tokens (`$` edge, `.` fill, `x` transparent)
-- 7 builtin stamps: `corner`, `edge-h`, `edge-v`, `solid`, `fill`, `transparent`, `space`
+- Brushes with positional colour tokens (`A`, `B`, `C`) for tiling patterns
 
 ````markdown
-# brick.stamp.md
+# checker.brush.md
 ---
-name: brick
-glyph: B
+name: checker
 ---
 
 ```px
-$$$$$$$$
-$......$
-$......$
-$$$$$$$$
+AB
+BA
 ```
 ````
+
+Brushes tile seamlessly and bind colours at usage time:
+
+```yaml
+~: { fill: checker, A: $edge, B: $fill }
+```
 
 See [PLAN.md](PLAN.md) for progress and [SPEC.md](SPEC.md) for the DSL specification.

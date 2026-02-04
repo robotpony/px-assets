@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2026-02-03
+
+### Added
+
+- Brush loader for `.brush.md` files
+  - `Brush` type with name and pattern grid
+  - Positional colour tokens (A, B, C, etc.) bound at usage time
+  - Brush parser supporting multi-brush files
+  - `BuiltinBrushes` with 7 default brushes:
+    - `solid` - 1x1 single colour
+    - `checker` - 2x2 checkerboard
+    - `diagonal-r` - diagonal lines (/)
+    - `diagonal-l` - diagonal lines (\)
+    - `h-line` - horizontal stripes
+    - `v-line` - vertical stripes
+    - `noise` - 4x4 pseudo-random pattern
+  - `Brush::render()` for converting pattern with colour bindings
+  - `Brush::fill()` for tiling patterns across regions
+  - Unbound tokens default to transparent
+
 ## [0.5.0] - 2026-02-03
 
 ### Added
