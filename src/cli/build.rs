@@ -8,8 +8,8 @@ use std::path::PathBuf;
 use clap::Args;
 
 use crate::error::{PxError, Result};
-use crate::parser::{parse_shape_file, parse_shader_file};
-use crate::render::{write_png, ShapeRenderer};
+use crate::parser::{parse_prefab_file, parse_shape_file, parse_shader_file};
+use crate::render::{write_png, PrefabRenderer, RenderedShape, ShapeRenderer};
 use crate::types::{BuiltinBrushes, BuiltinShaders, BuiltinStamps, Palette, Shader};
 
 /// Build sprites and maps from definition files
@@ -75,8 +75,10 @@ pub fn run(args: BuildArgs) -> Result<()> {
         renderer
     };
 
-    // Process each input file
+    // Phase 1: Render shapes
     let mut total_shapes = 0;
+    let mut rendered_shapes: Vec<RenderedShape> = Vec::new();
+    let mut prefab_files: Vec<PathBuf> = Vec::new();
 
     for file in &args.files {
         let ext = file
@@ -86,16 +88,19 @@ pub fn run(args: BuildArgs) -> Result<()> {
 
         match ext {
             "md" => {
-                // Check if it's a shape file
                 let filename = file
                     .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("");
 
                 if filename.contains(".shape.") {
-                    total_shapes += process_shape_file(file, &args, &renderer)?;
+                    let (count, rendered) = process_shape_file(file, &args, &renderer)?;
+                    total_shapes += count;
+                    rendered_shapes.extend(rendered);
+                } else if filename.contains(".prefab.") {
+                    prefab_files.push(file.clone());
                 } else {
-                    eprintln!("Skipping non-shape file: {}", file.display());
+                    eprintln!("Skipping unsupported file: {}", file.display());
                 }
             }
             _ => {
@@ -104,49 +109,95 @@ pub fn run(args: BuildArgs) -> Result<()> {
         }
     }
 
-    println!("Built {} shape(s) to {}", total_shapes, args.output.display());
+    // Phase 2: Render prefabs (need rendered shapes)
+    let mut total_prefabs = 0;
+    if !prefab_files.is_empty() {
+        let mut prefab_renderer = PrefabRenderer::new();
+        for shape in &rendered_shapes {
+            prefab_renderer.add_rendered(shape.clone());
+        }
+
+        for file in &prefab_files {
+            total_prefabs += process_prefab_file(file, &args, &mut prefab_renderer)?;
+        }
+    }
+
+    let total = total_shapes + total_prefabs;
+    println!("Built {} asset(s) to {}", total, args.output.display());
 
     Ok(())
 }
 
 /// Process a shape file and write PNG output.
+/// Returns the count and the rendered shapes (for prefab compositing).
 fn process_shape_file(
     path: &PathBuf,
     args: &BuildArgs,
     renderer: &ShapeRenderer,
-) -> Result<usize> {
-    // Read the file
+) -> Result<(usize, Vec<RenderedShape>)> {
     let source = fs::read_to_string(path).map_err(|e| PxError::Io {
         path: path.clone(),
         message: format!("Failed to read file: {}", e),
     })?;
 
-    // Parse shapes
     let shapes = parse_shape_file(&source)?;
+    let mut rendered_shapes = Vec::new();
 
-    // Render each shape
     for shape in &shapes {
-        // Get scale: CLI overrides shape frontmatter, default to 1
         let scale = if args.scale > 1 {
             args.scale
         } else {
             shape.scale.unwrap_or(1)
         };
 
-        // Render to pixels
         let rendered = renderer.render(shape);
 
-        // Determine output path
         let output_name = format!("{}.png", shape.name);
         let output_path = args.output.join(&output_name);
 
-        // Write PNG
         write_png(&rendered, &output_path, scale)?;
-
         println!("  {} -> {}", shape.name, output_path.display());
+
+        rendered_shapes.push(rendered);
     }
 
-    Ok(shapes.len())
+    Ok((shapes.len(), rendered_shapes))
+}
+
+/// Process a prefab file and write PNG output.
+/// Rendered prefabs are added to the renderer for nested prefab support.
+fn process_prefab_file(
+    path: &PathBuf,
+    args: &BuildArgs,
+    prefab_renderer: &mut PrefabRenderer,
+) -> Result<usize> {
+    let source = fs::read_to_string(path).map_err(|e| PxError::Io {
+        path: path.clone(),
+        message: format!("Failed to read file: {}", e),
+    })?;
+
+    let prefabs = parse_prefab_file(&source)?;
+
+    for prefab in &prefabs {
+        let scale = if args.scale > 1 {
+            args.scale
+        } else {
+            prefab.scale.unwrap_or(1)
+        };
+
+        let rendered = prefab_renderer.render(prefab)?;
+
+        let output_name = format!("{}.png", prefab.name);
+        let output_path = args.output.join(&output_name);
+
+        write_png(&rendered, &output_path, scale)?;
+        println!("  {} -> {}", prefab.name, output_path.display());
+
+        // Add rendered prefab so later prefabs can reference it
+        prefab_renderer.add_rendered(rendered);
+    }
+
+    Ok(prefabs.len())
 }
 
 /// Load shader from file or use builtin default.

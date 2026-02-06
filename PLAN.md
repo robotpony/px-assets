@@ -78,17 +78,17 @@ Phased approach from core parsing to full toolchain.
 
 ### 2.1 Asset Registry
 
-- [ ] Implement centralized asset store
-- [ ] Build dependency graph
-- [ ] Topological sort for build order
-- [ ] Detect circular references
+- [x] Implement centralized asset store
+- [x] Build dependency graph
+- [x] Topological sort for build order
+- [x] Detect circular references
 
 ### 2.2 File Discovery
 
-- [ ] Implement walkdir-based scanner
-- [ ] Filter by extension
-- [ ] Parse px.yaml manifest (optional)
-- [ ] Merge convention + manifest sources
+- [x] Implement walkdir-based scanner
+- [x] Filter by extension
+- [x] Parse px.yaml manifest (optional)
+- [x] Merge convention + manifest sources
 
 ### 2.3 Prefab Renderer
 

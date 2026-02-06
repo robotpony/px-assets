@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.0] - 2026-02-03
+
+### Added
+
+- File discovery system for px projects (Phase 2.2)
+  - `discover()` function to find all assets in a project directory
+  - `px.yaml` manifest support with full configuration:
+    - `sources`: directories/globs to scan
+    - `output`: output directory
+    - `target`: default target name
+    - `shader`: default shader name
+    - `scale`: default scale factor
+    - `excludes`: patterns to exclude
+  - `ScanResult` categorizing discovered files by asset type
+  - `LoadOptions` for controlling builtin inclusion
+  - Automatic asset loading into `RegistryBuilder`
+  - Glob pattern matching for excludes (`*.bak`, `**/temp/*`, etc.)
+  - Convention-based discovery (scans current dir if no manifest)
+
+## [0.10.0] - 2026-02-03
+
+### Added
+
+- Asset registry for centralized asset management (Phase 2.1)
+  - `AssetRegistry` for storing palettes, stamps, brushes, shaders, shapes
+  - `AssetId` with kind + name for unique identification (allows same name across types)
+  - `AssetKind` enum: Palette, Stamp, Brush, Shader, Shape, Prefab, Map
+  - `RegistryBuilder` for constructing registries from parsed assets
+  - `DependencyGraph` tracking relationships between assets
+  - Topological sort for determining correct build order
+  - Cycle detection with path reporting for circular dependencies
+  - Immutable registry design (build once)
+
 ## [0.9.0] - 2026-02-03
 
 ### Added

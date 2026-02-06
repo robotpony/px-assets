@@ -45,7 +45,7 @@ fn parse_shape_document(doc: RawDocument) -> Result<Shape> {
 }
 
 /// Parse the ASCII grid from body content.
-fn parse_grid(body: &str) -> Vec<Vec<char>> {
+pub(crate) fn parse_grid(body: &str) -> Vec<Vec<char>> {
     let mut rows: Vec<Vec<char>> = Vec::new();
     let mut max_width = 0;
 

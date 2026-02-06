@@ -22,7 +22,7 @@ pub mod types;
 use std::collections::HashMap;
 
 use crate::error::{PxError, Result};
-use crate::types::{Brush, Palette, Shader, Shape, Stamp};
+use crate::types::{Brush, Palette, Prefab, Shader, Shape, Stamp};
 
 pub use graph::{CycleError, DependencyGraph};
 pub use types::{AssetId, AssetKind, AssetRef};
@@ -38,7 +38,7 @@ pub struct AssetRegistry {
     brushes: HashMap<String, Brush>,
     shaders: HashMap<String, Shader>,
     shapes: HashMap<String, Shape>,
-    // prefabs and maps will be added in Phase 2.3/2.4
+    prefabs: HashMap<String, Prefab>,
 
     /// Dependency graph for all assets.
     graph: DependencyGraph,
@@ -73,6 +73,11 @@ impl AssetRegistry {
         self.shapes.get(name)
     }
 
+    /// Get a prefab by name.
+    pub fn get_prefab(&self, name: &str) -> Option<&Prefab> {
+        self.prefabs.get(name)
+    }
+
     /// Get all palette names.
     pub fn palette_names(&self) -> impl Iterator<Item = &str> {
         self.palettes.keys().map(|s| s.as_str())
@@ -96,6 +101,11 @@ impl AssetRegistry {
     /// Get all shape names.
     pub fn shape_names(&self) -> impl Iterator<Item = &str> {
         self.shapes.keys().map(|s| s.as_str())
+    }
+
+    /// Get all prefab names.
+    pub fn prefab_names(&self) -> impl Iterator<Item = &str> {
+        self.prefabs.keys().map(|s| s.as_str())
     }
 
     /// Get all palettes.
@@ -123,6 +133,11 @@ impl AssetRegistry {
         self.shapes.values()
     }
 
+    /// Get all prefabs.
+    pub fn prefabs(&self) -> impl Iterator<Item = &Prefab> {
+        self.prefabs.values()
+    }
+
     /// Get the dependency graph.
     pub fn graph(&self) -> &DependencyGraph {
         &self.graph
@@ -140,6 +155,7 @@ impl AssetRegistry {
             + self.brushes.len()
             + self.shaders.len()
             + self.shapes.len()
+            + self.prefabs.len()
     }
 
     /// Check if the registry is empty.
@@ -156,6 +172,7 @@ pub struct RegistryBuilder {
     brushes: HashMap<String, Brush>,
     shaders: HashMap<String, Shader>,
     shapes: HashMap<String, Shape>,
+    prefabs: HashMap<String, Prefab>,
 }
 
 impl RegistryBuilder {
@@ -234,6 +251,20 @@ impl RegistryBuilder {
         self
     }
 
+    /// Add a prefab to the registry.
+    pub fn add_prefab(&mut self, prefab: Prefab) -> &mut Self {
+        self.prefabs.insert(prefab.name.clone(), prefab);
+        self
+    }
+
+    /// Add multiple prefabs.
+    pub fn add_prefabs(&mut self, prefabs: impl IntoIterator<Item = Prefab>) -> &mut Self {
+        for prefab in prefabs {
+            self.add_prefab(prefab);
+        }
+        self
+    }
+
     /// Build the registry, computing dependencies and build order.
     pub fn build(self) -> Result<AssetRegistry> {
         let mut graph = DependencyGraph::new();
@@ -299,6 +330,21 @@ impl RegistryBuilder {
             }
         }
 
+        // Prefabs depend on shapes or other prefabs via legend
+        for prefab in self.prefabs.values() {
+            let id = AssetId::prefab(&prefab.name);
+            graph.register(id.clone());
+
+            for ref_name in prefab.referenced_names() {
+                // Could reference a shape or another prefab
+                if self.shapes.contains_key(ref_name) {
+                    graph.add_dependency(id.clone(), AssetId::shape(ref_name));
+                } else if self.prefabs.contains_key(ref_name) {
+                    graph.add_dependency(id.clone(), AssetId::prefab(ref_name));
+                }
+            }
+        }
+
         // Compute build order via topological sort
         let build_order = graph.topological_sort().map_err(|e| PxError::Build {
             message: e.to_string(),
@@ -311,6 +357,7 @@ impl RegistryBuilder {
             brushes: self.brushes,
             shaders: self.shaders,
             shapes: self.shapes,
+            prefabs: self.prefabs,
             graph,
             build_order,
         })

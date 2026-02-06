@@ -4,16 +4,18 @@
 //! and sprite maps for various platforms.
 
 pub mod cli;
+pub mod discovery;
 pub mod error;
 pub mod parser;
 pub mod registry;
 pub mod render;
 pub mod types;
 
+pub use discovery::{discover, discover_paths, DiscoveryResult, LoadOptions, Manifest, ScanResult};
 pub use error::{PxError, Result};
 pub use registry::{AssetId, AssetKind, AssetRegistry, RegistryBuilder};
-pub use render::{scale_pixels, write_png, RenderedShape, ShapeRenderer};
+pub use render::{scale_pixels, write_png, PrefabRenderer, RenderedShape, ShapeRenderer};
 pub use types::{
     Brush, BuiltinBrushes, BuiltinShaders, BuiltinStamps, Colour, ColourExpr, Effect, EffectParam,
-    ExprEvaluator, LegendEntry, Palette, PixelToken, Shader, ShaderBuilder, Shape, Stamp,
+    ExprEvaluator, LegendEntry, Palette, PixelToken, Prefab, Shader, ShaderBuilder, Shape, Stamp,
 };

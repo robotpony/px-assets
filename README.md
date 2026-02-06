@@ -24,7 +24,24 @@ The same shape can be rendered with different palettes, at different scales, for
 
 ## Status
 
-**Phase 1.8 complete** - PNG output.
+**Phase 2.2 complete** - File discovery.
+
+Projects can use a `px.yaml` manifest for configuration:
+
+```yaml
+# px.yaml
+sources:
+  - shapes/
+  - palettes/
+output: dist/sprites
+shader: dungeon-dark
+scale: 4
+excludes:
+  - "*.bak"
+  - "**/temp/*"
+```
+
+Or rely on convention-based discovery (scans current directory for `.shape.md`, `.palette.md`, etc.).
 
 - Palettes with colour expressions (`darken`, `lighten`, `mix`, etc.)
 - Stamps with semantic pixel tokens (`$` edge, `.` fill, `x` transparent)
