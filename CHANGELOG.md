@@ -2,6 +2,62 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.14.0] - 2026-02-07
+
+### Added
+
+- Validation system for asset registries (Phase 1.9)
+  - `Severity`, `Diagnostic`, and `ValidationResult` types for structured diagnostics
+  - Nine validation checks covering shapes, prefabs, and maps:
+    - `check_empty_grids`: error on zero-size grids
+    - `check_duplicate_names`: warn on shape/prefab name collisions
+    - `check_shape_legend_refs`: error on missing stamp/brush references
+    - `check_prefab_legend_refs`: error on missing shape/prefab references
+    - `check_map_legend_refs`: error on missing references (skips "empty")
+    - `check_unmapped_glyphs`: warn on grid glyphs with no legend entry and no builtin match
+    - `check_unused_legends`: warn on legend entries never used in the grid
+    - `check_stamp_sizes`: warn when a shape mixes stamps of different dimensions
+    - `check_palette_refs`: warn on brush bindings referencing unknown palette colours
+  - `validate_registry()` orchestrator runs all checks and merges results
+  - `print_diagnostics()` formats output to stderr with error codes and help text
+  - `px validate` command: discovers, loads, and validates assets, exits 1 on errors
+  - `px build --validate` flag: runs validation before building, aborts on errors
+
+## [0.13.0] - 2026-02-07
+
+### Added
+
+- Map renderer for level layouts (Phase 2.4)
+  - `Map` type with ASCII placement grid and name-reference legend (same structure as Prefab)
+  - `parse_map_file()` parser for `.map.md` files
+  - `MapRenderer` for compositing shapes/prefabs onto a map canvas
+  - `empty` reserved name: legend entries mapping to "empty" produce transparent cells with no metadata
+  - `MapMetadata` and `MapInstance` structs for JSON export (derives `Serialize`)
+  - JSON metadata output alongside PNG: grid dimensions, cell size, pixel positions per shape
+  - Registry integration with dependency tracking (maps depend on shapes/prefabs)
+  - Loader integration: `load_assets()` now discovers and loads `.map.md` files
+  - Three-phase CLI build: shapes first, then prefabs, then maps
+  - Scale support via frontmatter or CLI `--scale` flag
+
+## [0.12.0] - 2026-02-05
+
+### Added
+
+- Prefab renderer for compositing shapes into larger images (Phase 2.3)
+  - `Prefab` type with ASCII placement grid and name-reference legend
+  - `parse_prefab_file()` parser for `.prefab.md` files
+  - Legend validation: rejects complex brush/fill entries (simple name refs only)
+  - `PrefabRenderer` for compositing pre-rendered shapes onto a canvas
+  - Uniform cell sizing (max width x max height of referenced shapes)
+  - Transparency-aware blit (alpha > 0 overwrites, alpha == 0 skips)
+  - Nested prefab support (rendered prefabs available for later prefabs)
+  - Shared `parse_grid` between shape and prefab parsers
+  - Registry integration with dependency tracking (prefabs depend on shapes/prefabs)
+  - Topological sort ensures correct render order for nested prefabs
+  - Loader integration: `load_assets()` now discovers and loads `.prefab.md` files
+  - Two-phase CLI build: shapes render first, then prefabs composite them
+  - Scale support via frontmatter or CLI `--scale` flag
+
 ## [0.11.0] - 2026-02-03
 
 ### Added

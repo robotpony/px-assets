@@ -13,6 +13,7 @@
 mod brush;
 mod colour;
 mod expr;
+mod map;
 mod palette;
 mod prefab;
 mod shader;
@@ -22,6 +23,7 @@ mod stamp;
 pub use brush::{Brush, BuiltinBrushes};
 pub use colour::Colour;
 pub use expr::{ColourExpr, ExprEvaluator};
+pub use map::{Map, MapInstance, MapMetadata};
 pub use palette::{Palette, PaletteBuilder};
 pub use prefab::Prefab;
 pub use shader::{BuiltinShaders, Effect, EffectParam, Shader, ShaderBuilder};

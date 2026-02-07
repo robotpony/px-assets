@@ -7,10 +7,12 @@ use std::path::PathBuf;
 
 use clap::Args;
 
+use crate::discovery::{discover_paths, LoadOptions};
 use crate::error::{PxError, Result};
-use crate::parser::{parse_prefab_file, parse_shape_file, parse_shader_file};
-use crate::render::{write_png, PrefabRenderer, RenderedShape, ShapeRenderer};
+use crate::parser::{parse_map_file, parse_prefab_file, parse_shape_file, parse_shader_file};
+use crate::render::{write_png, MapRenderer, PrefabRenderer, RenderedShape, ShapeRenderer};
 use crate::types::{BuiltinBrushes, BuiltinShaders, BuiltinStamps, Palette, Shader};
+use crate::validation::{print_diagnostics, validate_registry};
 
 /// Build sprites and maps from definition files
 #[derive(Args, Debug)]
@@ -34,9 +36,30 @@ pub struct BuildArgs {
     /// Scale factor for output (integer upscaling)
     #[arg(long, default_value = "1")]
     pub scale: u32,
+
+    /// Run validation checks before building
+    #[arg(long)]
+    pub validate: bool,
 }
 
 pub fn run(args: BuildArgs) -> Result<()> {
+    // Run validation if requested
+    if args.validate {
+        let discovery = discover_paths(&args.files)?;
+        let builder =
+            crate::discovery::load_assets(&discovery.scan, &LoadOptions::with_builtins())?;
+        let registry = builder.build()?;
+        let result = validate_registry(&registry);
+        print_diagnostics(&result);
+
+        if result.has_errors() {
+            return Err(PxError::Build {
+                message: "Validation failed, aborting build".to_string(),
+                help: Some("Fix the errors above and try again".to_string()),
+            });
+        }
+    }
+
     // Create output directory if needed
     if !args.output.exists() {
         fs::create_dir_all(&args.output).map_err(|e| PxError::Io {
@@ -79,6 +102,7 @@ pub fn run(args: BuildArgs) -> Result<()> {
     let mut total_shapes = 0;
     let mut rendered_shapes: Vec<RenderedShape> = Vec::new();
     let mut prefab_files: Vec<PathBuf> = Vec::new();
+    let mut map_files: Vec<PathBuf> = Vec::new();
 
     for file in &args.files {
         let ext = file
@@ -99,6 +123,8 @@ pub fn run(args: BuildArgs) -> Result<()> {
                     rendered_shapes.extend(rendered);
                 } else if filename.contains(".prefab.") {
                     prefab_files.push(file.clone());
+                } else if filename.contains(".map.") {
+                    map_files.push(file.clone());
                 } else {
                     eprintln!("Skipping unsupported file: {}", file.display());
                 }
@@ -111,6 +137,7 @@ pub fn run(args: BuildArgs) -> Result<()> {
 
     // Phase 2: Render prefabs (need rendered shapes)
     let mut total_prefabs = 0;
+    let mut rendered_prefabs: Vec<RenderedShape> = Vec::new();
     if !prefab_files.is_empty() {
         let mut prefab_renderer = PrefabRenderer::new();
         for shape in &rendered_shapes {
@@ -118,11 +145,29 @@ pub fn run(args: BuildArgs) -> Result<()> {
         }
 
         for file in &prefab_files {
-            total_prefabs += process_prefab_file(file, &args, &mut prefab_renderer)?;
+            let (count, rendered) = process_prefab_file(file, &args, &mut prefab_renderer)?;
+            total_prefabs += count;
+            rendered_prefabs.extend(rendered);
         }
     }
 
-    let total = total_shapes + total_prefabs;
+    // Phase 3: Render maps (need rendered shapes and prefabs)
+    let mut total_maps = 0;
+    if !map_files.is_empty() {
+        let mut map_renderer = MapRenderer::new();
+        for shape in &rendered_shapes {
+            map_renderer.add_rendered(shape.clone());
+        }
+        for prefab in &rendered_prefabs {
+            map_renderer.add_rendered(prefab.clone());
+        }
+
+        for file in &map_files {
+            total_maps += process_map_file(file, &args, &map_renderer)?;
+        }
+    }
+
+    let total = total_shapes + total_prefabs + total_maps;
     println!("Built {} asset(s) to {}", total, args.output.display());
 
     Ok(())
@@ -165,18 +210,20 @@ fn process_shape_file(
 }
 
 /// Process a prefab file and write PNG output.
-/// Rendered prefabs are added to the renderer for nested prefab support.
+/// Returns the count and the rendered prefabs (for map compositing).
+/// Rendered prefabs are also added to the renderer for nested prefab support.
 fn process_prefab_file(
     path: &PathBuf,
     args: &BuildArgs,
     prefab_renderer: &mut PrefabRenderer,
-) -> Result<usize> {
+) -> Result<(usize, Vec<RenderedShape>)> {
     let source = fs::read_to_string(path).map_err(|e| PxError::Io {
         path: path.clone(),
         message: format!("Failed to read file: {}", e),
     })?;
 
     let prefabs = parse_prefab_file(&source)?;
+    let mut rendered_prefabs = Vec::new();
 
     for prefab in &prefabs {
         let scale = if args.scale > 1 {
@@ -194,10 +241,56 @@ fn process_prefab_file(
         println!("  {} -> {}", prefab.name, output_path.display());
 
         // Add rendered prefab so later prefabs can reference it
-        prefab_renderer.add_rendered(rendered);
+        prefab_renderer.add_rendered(rendered.clone());
+        rendered_prefabs.push(rendered);
     }
 
-    Ok(prefabs.len())
+    Ok((prefabs.len(), rendered_prefabs))
+}
+
+/// Process a map file and write PNG + JSON output.
+fn process_map_file(
+    path: &PathBuf,
+    args: &BuildArgs,
+    map_renderer: &MapRenderer,
+) -> Result<usize> {
+    let source = fs::read_to_string(path).map_err(|e| PxError::Io {
+        path: path.clone(),
+        message: format!("Failed to read file: {}", e),
+    })?;
+
+    let maps = parse_map_file(&source)?;
+
+    for map in &maps {
+        let scale = if args.scale > 1 {
+            args.scale
+        } else {
+            map.scale.unwrap_or(1)
+        };
+
+        let (rendered, metadata) = map_renderer.render(map)?;
+
+        // Write PNG
+        let png_name = format!("{}.png", map.name);
+        let png_path = args.output.join(&png_name);
+        write_png(&rendered, &png_path, scale)?;
+
+        // Write JSON metadata
+        let json_name = format!("{}.json", map.name);
+        let json_path = args.output.join(&json_name);
+        let json = serde_json::to_string_pretty(&metadata).map_err(|e| PxError::Build {
+            message: format!("Failed to serialize map metadata: {}", e),
+            help: None,
+        })?;
+        fs::write(&json_path, json).map_err(|e| PxError::Io {
+            path: json_path.clone(),
+            message: format!("Failed to write metadata: {}", e),
+        })?;
+
+        println!("  {} -> {} + {}", map.name, png_path.display(), json_path.display());
+    }
+
+    Ok(maps.len())
 }
 
 /// Load shader from file or use builtin default.
@@ -286,6 +379,7 @@ name: test-square
             target: None,
             output: output_dir.clone(),
             scale: 1,
+            validate: false,
         };
 
         run(args).unwrap();
@@ -326,6 +420,7 @@ name: scaled-shape
             target: None,
             output: output_dir.clone(),
             scale: 4,
+            validate: false,
         };
 
         run(args).unwrap();
@@ -371,6 +466,7 @@ name: shape-b
             target: None,
             output: output_dir.clone(),
             scale: 1,
+            validate: false,
         };
 
         run(args).unwrap();
@@ -408,6 +504,7 @@ scale: 2
             target: None,
             output: output_dir.clone(),
             scale: 1,
+            validate: false,
         };
 
         run(args).unwrap();
@@ -449,6 +546,7 @@ scale: 2
             target: None,
             output: output_dir.clone(),
             scale: 4,
+            validate: false,
         };
 
         run(args).unwrap();

@@ -22,7 +22,7 @@ pub mod types;
 use std::collections::HashMap;
 
 use crate::error::{PxError, Result};
-use crate::types::{Brush, Palette, Prefab, Shader, Shape, Stamp};
+use crate::types::{Brush, Map, Palette, Prefab, Shader, Shape, Stamp};
 
 pub use graph::{CycleError, DependencyGraph};
 pub use types::{AssetId, AssetKind, AssetRef};
@@ -39,6 +39,7 @@ pub struct AssetRegistry {
     shaders: HashMap<String, Shader>,
     shapes: HashMap<String, Shape>,
     prefabs: HashMap<String, Prefab>,
+    maps: HashMap<String, Map>,
 
     /// Dependency graph for all assets.
     graph: DependencyGraph,
@@ -78,6 +79,11 @@ impl AssetRegistry {
         self.prefabs.get(name)
     }
 
+    /// Get a map by name.
+    pub fn get_map(&self, name: &str) -> Option<&Map> {
+        self.maps.get(name)
+    }
+
     /// Get all palette names.
     pub fn palette_names(&self) -> impl Iterator<Item = &str> {
         self.palettes.keys().map(|s| s.as_str())
@@ -106,6 +112,11 @@ impl AssetRegistry {
     /// Get all prefab names.
     pub fn prefab_names(&self) -> impl Iterator<Item = &str> {
         self.prefabs.keys().map(|s| s.as_str())
+    }
+
+    /// Get all map names.
+    pub fn map_names(&self) -> impl Iterator<Item = &str> {
+        self.maps.keys().map(|s| s.as_str())
     }
 
     /// Get all palettes.
@@ -138,6 +149,11 @@ impl AssetRegistry {
         self.prefabs.values()
     }
 
+    /// Get all maps.
+    pub fn maps(&self) -> impl Iterator<Item = &Map> {
+        self.maps.values()
+    }
+
     /// Get the dependency graph.
     pub fn graph(&self) -> &DependencyGraph {
         &self.graph
@@ -156,6 +172,7 @@ impl AssetRegistry {
             + self.shaders.len()
             + self.shapes.len()
             + self.prefabs.len()
+            + self.maps.len()
     }
 
     /// Check if the registry is empty.
@@ -173,6 +190,7 @@ pub struct RegistryBuilder {
     shaders: HashMap<String, Shader>,
     shapes: HashMap<String, Shape>,
     prefabs: HashMap<String, Prefab>,
+    maps: HashMap<String, Map>,
 }
 
 impl RegistryBuilder {
@@ -265,6 +283,20 @@ impl RegistryBuilder {
         self
     }
 
+    /// Add a map to the registry.
+    pub fn add_map(&mut self, map: Map) -> &mut Self {
+        self.maps.insert(map.name.clone(), map);
+        self
+    }
+
+    /// Add multiple maps.
+    pub fn add_maps(&mut self, maps: impl IntoIterator<Item = Map>) -> &mut Self {
+        for map in maps {
+            self.add_map(map);
+        }
+        self
+    }
+
     /// Build the registry, computing dependencies and build order.
     pub fn build(self) -> Result<AssetRegistry> {
         let mut graph = DependencyGraph::new();
@@ -345,6 +377,23 @@ impl RegistryBuilder {
             }
         }
 
+        // Maps depend on shapes or prefabs via legend (same as prefabs)
+        for map in self.maps.values() {
+            let id = AssetId::map(&map.name);
+            graph.register(id.clone());
+
+            for ref_name in map.referenced_names() {
+                if ref_name == "empty" {
+                    continue;
+                }
+                if self.shapes.contains_key(ref_name) {
+                    graph.add_dependency(id.clone(), AssetId::shape(ref_name));
+                } else if self.prefabs.contains_key(ref_name) {
+                    graph.add_dependency(id.clone(), AssetId::prefab(ref_name));
+                }
+            }
+        }
+
         // Compute build order via topological sort
         let build_order = graph.topological_sort().map_err(|e| PxError::Build {
             message: e.to_string(),
@@ -358,6 +407,7 @@ impl RegistryBuilder {
             shaders: self.shaders,
             shapes: self.shapes,
             prefabs: self.prefabs,
+            maps: self.maps,
             graph,
             build_order,
         })

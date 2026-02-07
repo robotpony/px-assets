@@ -28,6 +28,7 @@ mod document;
 mod frontmatter;
 mod legend;
 pub mod brush;
+pub mod map;
 pub mod palette;
 pub mod prefab;
 pub mod shader;
@@ -39,6 +40,7 @@ pub mod types;
 // Re-export main entry points
 pub use brush::parse_brush_file;
 pub use document::parse_documents;
+pub use map::parse_map_file;
 pub use palette::parse_palette;
 pub use prefab::parse_prefab_file;
 pub use shader::parse_shader_file;
@@ -48,5 +50,4 @@ pub use stamp::parse_stamp_file;
 pub use types::{LegendValue, RawDocument};
 
 // Future parser modules for specific file types:
-// pub mod map;
 // pub mod target;

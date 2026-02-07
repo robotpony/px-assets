@@ -64,9 +64,9 @@ Phased approach from core parsing to full toolchain.
 
 ### 1.9 Validation & Warnings
 
-- [ ] Collect warnings during build (missing refs, size mismatches)
-- [ ] Implement miette-style error formatting
-- [ ] Add `px validate` command
+- [x] Collect warnings during build (missing refs, size mismatches)
+- [x] Implement miette-style error formatting
+- [x] Add `px validate` command
 
 **Deliverable**: `px build shapes/wall.shape.md --brush=default --shader=default` outputs PNG.
 
@@ -92,17 +92,17 @@ Phased approach from core parsing to full toolchain.
 
 ### 2.3 Prefab Renderer
 
-- [ ] Parse prefab grid + legend
-- [ ] Resolve shape/prefab references
-- [ ] Calculate layout positions
-- [ ] Composite rendered shapes
-- [ ] Support nested prefabs
+- [x] Parse prefab grid + legend
+- [x] Resolve shape/prefab references
+- [x] Calculate layout positions
+- [x] Composite rendered shapes
+- [x] Support nested prefabs
 
 ### 2.4 Map Renderer
 
-- [ ] Parse map (same as prefab)
-- [ ] Handle `empty` reserved name
-- [ ] Generate instance metadata (positions, cells)
+- [x] Parse map (same as prefab)
+- [x] Handle `empty` reserved name
+- [x] Generate instance metadata (positions, cells)
 
 ### 2.5 Sprite Sheet Packer
 
