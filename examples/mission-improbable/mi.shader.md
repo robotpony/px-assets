@@ -3,4 +3,4 @@ name: mi
 palette: mi
 ---
 
-# No effects, just palette binding
+<!-- No effects, just palette binding -->
