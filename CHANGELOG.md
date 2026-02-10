@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.18.2] - 2026-02-09
+
+### Fixed
+
+- Example: `robot-alert` in `npcs.shape.md` missing legend entry for `o` glyph (rendered as magenta fallback instead of fill)
+
 ## [0.18.1] - 2026-02-09
 
 ### Fixed
