@@ -1,6 +1,6 @@
 ---
 name: level-example
-tags: #level #test
+tags: "#level #test"
 shader: mi
 ---
 

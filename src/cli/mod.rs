@@ -1,4 +1,5 @@
 pub mod build;
+pub mod init;
 pub mod validate;
 
 use clap::{Parser, Subcommand};
@@ -16,6 +17,9 @@ pub struct Cli {
 pub enum Commands {
     /// Build sprites and maps from definition files
     Build(build::BuildArgs),
+
+    /// Initialize a px project (generates px.yaml)
+    Init(init::InitArgs),
 
     /// Validate definition files without rendering
     Validate(validate::ValidateArgs),

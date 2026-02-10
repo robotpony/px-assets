@@ -2,6 +2,100 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.18.1] - 2026-02-09
+
+### Fixed
+
+- Legend parser now skips HTML comments between code block and `---` delimiter
+  - Maps (and shapes/prefabs) with HTML comments before the legend section were silently parsed with no legend, producing empty 1x1-cell renders
+  - Affects any `.map.md`, `.shape.md`, or `.prefab.md` file using markdown comments for documentation
+
+## [0.18.0] - 2026-02-09
+
+### Added
+
+- Directory-aware build (Phase 2.8)
+  - `px build` with no arguments scans current directory, reads `px.yaml` if present
+  - `px build shapes/ prefabs/` scans directories for assets
+  - `px build shapes/*.shape.md` still works (explicit files)
+  - Discovery summary printed to stderr when scanning: "Discovered N shapes, N prefabs, N maps"
+  - Manifest settings merged into build: CLI > target > manifest > frontmatter > defaults
+  - Manifest `output` used as fallback when `-o` not specified
+  - Manifest `scale` and `shader` merged into the settings chain
+- `px init` command
+  - Scans directory for assets and generates `px.yaml` manifest
+  - Discovers source directories from asset file locations
+  - `--force` flag to overwrite existing `px.yaml`
+  - Optional path argument (default: current directory)
+
+### Changed
+
+- `px build` no longer requires file arguments (defaults to current directory scan)
+- `-o` / `--output` is now optional (defaults to manifest `output` or "dist")
+
+## [0.17.0] - 2026-02-09
+
+### Added
+
+- Target system for named output profiles (Phase 2.7)
+  - `Target` type bundling format, scale, sheet config, padding, palette mode, and shader
+  - `TargetBuilder` for constructing targets from parsed definitions
+  - `SheetConfig` enum: `None`, `Auto`, `Fixed { width, height }` with `parse()` for "auto", "WxH", "none"
+  - `PaletteMode` enum: `Rgba`, `Indexed` (indexed reserved for Phase 3 formats)
+  - `BuiltinTargets` with two profiles:
+    - `web`: PNG, no sheet, all defaults
+    - `sheet`: PNG, auto sheet packing
+  - `.target.md` parser with frontmatter + body key-value support (unknown keys ignored for forward compat)
+  - `--target` CLI flag: `--target=web`, `--target=sheet`, or `--target=path/to/custom.target.md`
+  - Target resolution: builtins checked first, then file path, else error with help text
+  - Setting merge order: CLI flags > target profile > per-asset frontmatter > defaults
+  - `check_target_format()` validation: warns if target uses unsupported format (only PNG for now)
+  - Registry support: `AssetKind::Target`, `AssetId::target()`, target storage and accessors
+  - Discovery support: `.target.md` file detection, scanning, and loading
+
+### Changed
+
+- `--scale` changed from `u32` (default 1) to `Option<u32>` (no default)
+  - `None` means "use target scale, then frontmatter scale, then 1"
+  - `Some(n)` with n > 1 overrides all other scale sources
+- `--padding` changed from `u32` (default 0) to `Option<u32>` (no default)
+  - Follows same merge chain: CLI > target > 0
+- `--shader` now merges with target shader: CLI > target shader > "default"
+- `--sheet` flag now composes with target sheet config: CLI flag activates Auto, target can set Auto or Fixed
+- Internal: process functions now accept explicit `default_scale` and `output` params instead of `&BuildArgs`
+
+### Fixed
+
+- Sheet JSON frame coordinates now match actual scaled PNG pixel dimensions (were at 1x regardless of `--scale`)
+- Sheet JSON `meta.version` now uses crate version instead of hardcoded "0.16.0"
+- Example files: tags now quoted in YAML frontmatter (`tags: "#player"`) so they're parsed correctly instead of treated as YAML comments
+
+## [0.16.0] - 2026-02-09
+
+### Added
+
+- Metadata export for all asset types (Phase 2.6)
+  - Shape metadata: `{name}.json` alongside each shape PNG with name, pixel size, and tags
+  - Prefab metadata: `{name}.json` alongside each prefab PNG with name, pixel size, tags, grid dimensions, cell size, and instance positions (which shapes are placed where)
+  - `ShapeMetadata` struct in types module (derives `Serialize`)
+  - `PrefabMetadata` and `PrefabInstance` structs in types module (derive `Serialize`)
+  - `PrefabRenderer::render()` now returns `(RenderedShape, PrefabMetadata)` tuple with instance tracking
+  - `write_metadata_json()` helper in build command for consistent JSON output
+  - All asset types (shapes, prefabs, maps, sheets) now export JSON metadata alongside PNGs
+
+## [0.15.0] - 2026-02-07
+
+### Added
+
+- Sprite sheet packer (Phase 2.5)
+  - `--sheet` flag on `px build` packs all shapes and prefabs into a single sprite sheet
+  - `--padding N` flag adds N pixels between sprites in the sheet (default 0)
+  - Shelf packing algorithm: sorts by height, packs left-to-right in rows
+  - Auto-sized sheet width (nearest power-of-two) with height growing as needed
+  - Outputs `sheet.png` + `sheet.json` in TexturePacker-compatible JSON Hash format
+  - `SheetPacker` and `SheetMeta` types in the render module
+  - Maps are skipped in sheet mode (they're level layouts, not atlas sprites)
+
 ## [0.14.0] - 2026-02-07
 
 ### Added

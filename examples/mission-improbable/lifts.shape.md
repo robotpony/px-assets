@@ -1,6 +1,6 @@
 ---
 name: lift-platform
-tags: #lift #solid
+tags: "#lift #solid"
 ---
 
 ```px
@@ -10,7 +10,7 @@ tags: #lift #solid
 
 ---
 name: lift-shaft
-tags: #lift #background
+tags: "#lift #background"
 ---
 
 ```px

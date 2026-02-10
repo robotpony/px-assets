@@ -7,6 +7,7 @@ fn main() -> Result<()> {
 
     match cli.command {
         Commands::Build(args) => px::cli::build::run(args)?,
+        Commands::Init(args) => px::cli::init::run(args)?,
         Commands::Validate(args) => px::cli::validate::run(args)?,
     }
 

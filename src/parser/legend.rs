@@ -24,7 +24,8 @@ pub struct LegendResult {
 /// Legend starts with `---` and contains character mappings.
 /// It ends at EOF or the next `---` that starts a new definition (has `name:`).
 pub fn extract_legend(source: &str, base_offset: usize) -> Result<Option<LegendResult>> {
-    let trimmed = source.trim_start();
+    // Skip leading whitespace and HTML comments before the --- delimiter
+    let trimmed = skip_html_comments(source.trim_start());
     let leading_whitespace = source.len() - trimmed.len();
 
     // Legend must start with ---
@@ -85,6 +86,25 @@ pub fn extract_legend(source: &str, base_offset: usize) -> Result<Option<LegendR
         span,
         content_end: leading_whitespace + legend_start + legend_end,
     }))
+}
+
+/// Skip leading HTML comment lines and whitespace.
+///
+/// Markdown files may contain HTML comments between the code block
+/// and the legend `---` delimiter. Strip them so the delimiter is found.
+fn skip_html_comments(s: &str) -> &str {
+    let mut remaining = s;
+    loop {
+        let trimmed = remaining.trim_start();
+        if trimmed.starts_with("<!--") {
+            // Find end of comment
+            if let Some(end) = trimmed.find("-->") {
+                remaining = trimmed[end + 3..].trim_start();
+                continue;
+            }
+        }
+        return trimmed;
+    }
 }
 
 /// Find where the legend section ends.
@@ -302,6 +322,32 @@ mod tests {
         let result = extract_legend(source, 0).unwrap();
 
         assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_extract_legend_with_html_comments() {
+        let source = "<!-- comment -->\n<!-- another -->\n---\nB: brick\n";
+
+        let result = extract_legend(source, 0).unwrap().unwrap();
+
+        assert_eq!(result.entries.len(), 1);
+        assert!(matches!(
+            &result.entries.get(&'B').unwrap().value,
+            LegendValue::Reference(s) if s == "brick"
+        ));
+    }
+
+    #[test]
+    fn test_extract_legend_with_multiline_html_comment() {
+        let source = "<!-- multi\nline\ncomment -->\n---\nW: wall\n";
+
+        let result = extract_legend(source, 0).unwrap().unwrap();
+
+        assert_eq!(result.entries.len(), 1);
+        assert!(matches!(
+            &result.entries.get(&'W').unwrap().value,
+            LegendValue::Reference(s) if s == "wall"
+        ));
     }
 
     #[test]

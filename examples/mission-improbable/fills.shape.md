@@ -1,6 +1,6 @@
 ---
 name: rock
-tags: #background #decoration
+tags: "#background #decoration"
 ---
 
 ```px
@@ -13,7 +13,7 @@ tags: #background #decoration
 
 ---
 name: empty
-tags: #background
+tags: "#background"
 ---
 
 ```px

@@ -1,6 +1,6 @@
 ---
 name: cabinet
-tags: #object #searchable
+tags: "#object #searchable"
 ---
 
 ```px
@@ -14,7 +14,7 @@ tags: #object #searchable
 
 ---
 name: chair
-tags: #object
+tags: "#object"
 ---
 
 ```px
@@ -26,7 +26,7 @@ tags: #object
 
 ---
 name: terminal
-tags: #object #interactive
+tags: "#object #interactive"
 ---
 
 ```px

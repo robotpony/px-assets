@@ -4,3 +4,4 @@ test-output/
 dist/
 tests/
 test-output/
+.DS_Store

@@ -24,7 +24,28 @@ The same shape can be rendered with different palettes, at different scales, for
 
 ## Status
 
-**Phase 1.9 complete** - Validation system.
+**Phase 2.8 complete** - Directory-aware build and `px init`.
+
+`px build` now discovers assets automatically:
+
+```bash
+# Build everything in current directory (reads px.yaml if present)
+px build
+
+# Build from a project directory
+px build examples/mission-improbable/
+
+# Build specific files (still works)
+px build shapes/*.shape.md prefabs/*.prefab.md -o dist
+```
+
+`px init` generates a `px.yaml` manifest from discovered assets:
+
+```bash
+px init              # Scan current directory
+px init my-project/  # Scan a specific directory
+px init --force      # Overwrite existing px.yaml
+```
 
 `px validate` checks assets for missing references, unused legends, mismatched stamp sizes, and more:
 
@@ -93,7 +114,24 @@ W: wall-segment
 D: door
 ````
 
-Each character in the grid maps to a shape (or another prefab) by name. Nested prefabs are resolved automatically via topological sort.
+Each character in the grid maps to a shape (or another prefab) by name. Nested prefabs are resolved automatically via topological sort. Building a prefab outputs both a PNG and a JSON file with instance metadata:
+
+```json
+{
+  "name": "tower",
+  "size": [4, 16],
+  "tags": [],
+  "grid": [1, 4],
+  "cell_size": [4, 4],
+  "shapes": [
+    { "name": "roof", "positions": [[0, 0]] },
+    { "name": "wall-segment", "positions": [[0, 4], [0, 8]] },
+    { "name": "door", "positions": [[0, 12]] }
+  ]
+}
+```
+
+Individual shapes also export JSON metadata (`name`, `size`, `tags`) alongside their PNGs.
 
 ```bash
 # Build shapes, prefabs, and maps together
@@ -124,15 +162,55 @@ Or rely on convention-based discovery (scans current directory for `.shape.md`, 
 - Shapes with ASCII grids and legend-based glyph resolution
 - Prefabs for compositing shapes into larger images (nested prefab support)
 - Maps for level layouts with JSON metadata export (instance positions, grid info)
+- Sprite sheet packing with `--sheet` (shelf algorithm, TexturePacker-compatible JSON)
+- Target profiles for bundling output settings (`--target=web`, `--target=sheet`, or custom `.target.md` files)
 - PNG output with integer scaling
 
 ```bash
+# Build everything in current directory
+px build
+
+# Build from a project directory
+px build my-project/
+
 # Build a shape file to PNG
 px build shapes/wall.shape.md -o dist --scale 4
 
 # Build with custom shader
 px build shapes/*.shape.md --shader=dungeon -o dist
+
+# Pack all sprites into a single sheet
+px build shapes/*.shape.md prefabs/*.prefab.md --sheet -o dist
+
+# Sheet with 2px padding between sprites
+px build shapes/*.shape.md --sheet --padding 2 -o dist
+
+# Build with a named target profile
+px build shapes/*.shape.md --target=web -o dist
+
+# Target with CLI overrides (CLI scale wins over target scale)
+px build shapes/*.shape.md --target=web --scale 4 -o dist
+
+# Build with a custom target file
+px build shapes/*.shape.md --target=retro.target.md -o dist
 ```
+
+Targets bundle output settings into named profiles. Two builtins are provided: `web` (individual PNGs, all defaults) and `sheet` (auto sheet packing). Custom targets use `.target.md` files:
+
+````markdown
+# retro.target.md
+---
+name: retro
+format: png
+---
+
+scale: 4
+sheet: auto
+padding: 2
+shader: dark
+````
+
+Settings merge in priority order: CLI flags > target profile > per-asset frontmatter > defaults.
 
 Shapes can also specify scale in frontmatter:
 

@@ -1,6 +1,6 @@
 ---
 name: platform-left
-tags: #platform #solid
+tags: "#platform #solid"
 ---
 
 ```px
@@ -10,7 +10,7 @@ tags: #platform #solid
 
 ---
 name: platform-mid
-tags: #platform #solid
+tags: "#platform #solid"
 ---
 
 ```px
@@ -23,7 +23,7 @@ tags: #platform #solid
 
 ---
 name: platform-right
-tags: #platform #solid
+tags: "#platform #solid"
 ---
 
 ```px

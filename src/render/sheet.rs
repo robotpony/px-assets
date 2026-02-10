@@ -211,26 +211,27 @@ struct TPMeta {
 
 impl TexturePackerJson {
     fn from_meta(meta: &SheetMeta) -> Self {
+        let s = meta.scale;
         let mut frames = BTreeMap::new();
         for f in &meta.frames {
             frames.insert(
                 f.name.clone(),
                 TPFrame {
                     frame: TPRect {
-                        x: f.x,
-                        y: f.y,
-                        w: f.w,
-                        h: f.h,
+                        x: f.x * s,
+                        y: f.y * s,
+                        w: f.w * s,
+                        h: f.h * s,
                     },
                     rotated: false,
                     trimmed: false,
                     sprite_source_size: TPRect {
                         x: 0,
                         y: 0,
-                        w: f.w,
-                        h: f.h,
+                        w: f.w * s,
+                        h: f.h * s,
                     },
-                    source_size: TPSize { w: f.w, h: f.h },
+                    source_size: TPSize { w: f.w * s, h: f.h * s },
                 },
             );
         }
@@ -239,11 +240,11 @@ impl TexturePackerJson {
             frames,
             meta: TPMeta {
                 app: "px".to_string(),
-                version: "0.16.0".to_string(),
+                version: env!("CARGO_PKG_VERSION").to_string(),
                 image: meta.image.clone(),
                 size: TPSize {
-                    w: meta.size.0,
-                    h: meta.size.1,
+                    w: meta.size.0 * s,
+                    h: meta.size.1 * s,
                 },
                 scale: meta.scale.to_string(),
             },

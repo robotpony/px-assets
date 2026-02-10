@@ -106,25 +106,50 @@ Phased approach from core parsing to full toolchain.
 
 ### 2.5 Sprite Sheet Packer
 
-- [ ] Implement bin packing algorithm
-- [ ] Support fixed sheet size
-- [ ] Support auto-sizing
-- [ ] Add configurable padding
-- [ ] Generate frame metadata (x, y, w, h)
+- [x] Implement shelf packing algorithm
+- [x] Support auto-sizing (power-of-two width)
+- [x] Add configurable padding (`--padding N`)
+- [x] Generate frame metadata (x, y, w, h)
+- [x] TexturePacker-compatible JSON Hash output
 
 ### 2.6 Metadata Export
 
-- [ ] Generate shape metadata JSON
-- [ ] Generate sheet metadata JSON
-- [ ] Generate map metadata JSON (instances, grid info)
+- [x] Generate shape metadata JSON
+- [x] Generate sheet metadata JSON
+- [x] Generate map metadata JSON (instances, grid info)
+- [x] Generate prefab metadata JSON (instances, grid info)
 
 ### 2.7 Target System
 
-- [ ] Parse target definitions
-- [ ] Implement PNG target writer
-- [ ] Wire target selection to CLI (`--target=`)
+- [x] `Target` type bundling format, scale, sheet config, padding, palette mode, and shader
+- [x] `TargetBuilder` for constructing targets from parsed definitions
+- [x] `SheetConfig` enum (`None`, `Auto`, `Fixed`) with string parsing
+- [x] `PaletteMode` enum (`Rgba`, `Indexed`)
+- [x] `BuiltinTargets` with `web` and `sheet` profiles
+- [x] `.target.md` parser with frontmatter + body key-value support
+- [x] `--target` CLI flag: builtins, file paths, or error with help text
+- [x] Setting merge order: CLI flags > target profile > per-asset frontmatter > defaults
+- [x] `--scale` and `--padding` changed to `Option<u32>` for proper merge chain
+- [x] Registry, discovery, and loader integration for `.target.md` files
+- [x] `check_target_format()` validation: warns if format is not "png"
 
-**Deliverable**: `px build --target=web` outputs sprite sheet + JSON.
+### 2.8 Directory-Aware Build & Init
+
+- [x] `px build` with no args scans current directory (reads `px.yaml`)
+- [x] `px build <dir>` scans directories for assets
+- [x] Manifest settings merge: CLI > target > manifest > frontmatter > defaults
+- [x] `-o` fallback to manifest `output`
+- [x] `px init` generates `px.yaml` from discovered assets
+
+**Deliverables**:
+
+`px build --target=sheet` outputs sprite sheet + JSON.
+
+`px build --target=web` outputs individual PNGs + JSON metadata.
+
+`px build` (no args) discovers and builds all assets in current directory.
+
+`px init` generates a `px.yaml` manifest.
 
 ---
 
@@ -206,7 +231,7 @@ Phased approach from core parsing to full toolchain.
 
 ### 5.1 CLI Enhancements
 
-- [ ] Implement `px init`
+- [x] Implement `px init`
 - [ ] Implement `px list`
 - [ ] Add shell completions (clap_complete)
 - [ ] Add `--verbose` and `--quiet` modes
