@@ -28,6 +28,8 @@ pub struct ScanResult {
     pub prefabs: Vec<PathBuf>,
     /// Discovered map files.
     pub maps: Vec<PathBuf>,
+    /// Discovered target files.
+    pub targets: Vec<PathBuf>,
 }
 
 impl ScanResult {
@@ -45,6 +47,7 @@ impl ScanResult {
             + self.shapes.len()
             + self.prefabs.len()
             + self.maps.len()
+            + self.targets.len()
     }
 
     /// Check if no files were discovered.
@@ -62,6 +65,7 @@ impl ScanResult {
             AssetKind::Shape => &self.shapes,
             AssetKind::Prefab => &self.prefabs,
             AssetKind::Map => &self.maps,
+            AssetKind::Target => &self.targets,
         }
     }
 
@@ -74,6 +78,7 @@ impl ScanResult {
         self.shapes.extend(other.shapes);
         self.prefabs.extend(other.prefabs);
         self.maps.extend(other.maps);
+        self.targets.extend(other.targets);
     }
 }
 
@@ -116,6 +121,7 @@ pub fn scan_directory(root: &Path, manifest: &Manifest) -> ScanResult {
                 AssetKind::Shape => result.shapes.push(path_buf),
                 AssetKind::Prefab => result.prefabs.push(path_buf),
                 AssetKind::Map => result.maps.push(path_buf),
+                AssetKind::Target => result.targets.push(path_buf),
             }
         }
     }
@@ -160,6 +166,8 @@ pub fn detect_asset_kind(path: &Path) -> Option<AssetKind> {
         Some(AssetKind::Prefab)
     } else if filename.ends_with(".map.md") {
         Some(AssetKind::Map)
+    } else if filename.ends_with(".target.md") {
+        Some(AssetKind::Target)
     } else {
         None
     }
@@ -200,6 +208,10 @@ mod tests {
         assert_eq!(
             detect_asset_kind(Path::new("level-1.map.md")),
             Some(AssetKind::Map)
+        );
+        assert_eq!(
+            detect_asset_kind(Path::new("web.target.md")),
+            Some(AssetKind::Target)
         );
         assert_eq!(detect_asset_kind(Path::new("readme.md")), None);
         assert_eq!(detect_asset_kind(Path::new("file.txt")), None);

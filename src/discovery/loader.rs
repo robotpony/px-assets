@@ -6,7 +6,7 @@ use std::fs;
 use std::path::Path;
 
 use crate::error::{PxError, Result};
-use crate::parser::{parse_brush_file, parse_map_file, parse_palette, parse_prefab_file, parse_shader_file, parse_shape_file, parse_stamp_file};
+use crate::parser::{parse_brush_file, parse_map_file, parse_palette, parse_prefab_file, parse_shader_file, parse_shape_file, parse_stamp_file, parse_target_file};
 use crate::registry::RegistryBuilder;
 use crate::types::{BuiltinBrushes, BuiltinStamps, Palette};
 
@@ -126,6 +126,18 @@ pub fn load_assets(scan: &ScanResult, options: &LoadOptions) -> Result<RegistryB
         }
     }
 
+    // Load targets
+    for path in &scan.targets {
+        match load_targets(path) {
+            Ok(targets) => {
+                builder.add_targets(targets);
+            }
+            Err(e) => {
+                errors.push(format!("{}: {}", path.display(), e));
+            }
+        }
+    }
+
     // Add builtins if requested
     if options.include_builtin_stamps {
         builder.add_stamps(BuiltinStamps::all());
@@ -237,6 +249,26 @@ fn load_maps(path: &Path) -> Result<Vec<crate::types::Map>> {
     })?;
 
     parse_map_file(&content)
+}
+
+/// Load targets from a file.
+fn load_targets(path: &Path) -> Result<Vec<crate::types::Target>> {
+    let content = fs::read_to_string(path).map_err(|e| PxError::Io {
+        path: path.to_path_buf(),
+        message: e.to_string(),
+    })?;
+
+    let builders = parse_target_file(&content)?;
+
+    builders
+        .into_iter()
+        .map(|b| {
+            b.build().map_err(|e| PxError::Build {
+                message: e.to_string(),
+                help: None,
+            })
+        })
+        .collect()
 }
 
 #[cfg(test)]

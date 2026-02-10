@@ -22,7 +22,7 @@ pub mod types;
 use std::collections::HashMap;
 
 use crate::error::{PxError, Result};
-use crate::types::{Brush, Map, Palette, Prefab, Shader, Shape, Stamp};
+use crate::types::{Brush, Map, Palette, Prefab, Shader, Shape, Stamp, Target};
 
 pub use graph::{CycleError, DependencyGraph};
 pub use types::{AssetId, AssetKind, AssetRef};
@@ -40,6 +40,7 @@ pub struct AssetRegistry {
     shapes: HashMap<String, Shape>,
     prefabs: HashMap<String, Prefab>,
     maps: HashMap<String, Map>,
+    targets: HashMap<String, Target>,
 
     /// Dependency graph for all assets.
     graph: DependencyGraph,
@@ -154,6 +155,21 @@ impl AssetRegistry {
         self.maps.values()
     }
 
+    /// Get a target by name.
+    pub fn get_target(&self, name: &str) -> Option<&Target> {
+        self.targets.get(name)
+    }
+
+    /// Get all target names.
+    pub fn target_names(&self) -> impl Iterator<Item = &str> {
+        self.targets.keys().map(|s| s.as_str())
+    }
+
+    /// Get all targets.
+    pub fn targets(&self) -> impl Iterator<Item = &Target> {
+        self.targets.values()
+    }
+
     /// Get the dependency graph.
     pub fn graph(&self) -> &DependencyGraph {
         &self.graph
@@ -173,6 +189,7 @@ impl AssetRegistry {
             + self.shapes.len()
             + self.prefabs.len()
             + self.maps.len()
+            + self.targets.len()
     }
 
     /// Check if the registry is empty.
@@ -191,6 +208,7 @@ pub struct RegistryBuilder {
     shapes: HashMap<String, Shape>,
     prefabs: HashMap<String, Prefab>,
     maps: HashMap<String, Map>,
+    targets: HashMap<String, Target>,
 }
 
 impl RegistryBuilder {
@@ -297,6 +315,20 @@ impl RegistryBuilder {
         self
     }
 
+    /// Add a target to the registry.
+    pub fn add_target(&mut self, target: Target) -> &mut Self {
+        self.targets.insert(target.name.clone(), target);
+        self
+    }
+
+    /// Add multiple targets.
+    pub fn add_targets(&mut self, targets: impl IntoIterator<Item = Target>) -> &mut Self {
+        for target in targets {
+            self.add_target(target);
+        }
+        self
+    }
+
     /// Build the registry, computing dependencies and build order.
     pub fn build(self) -> Result<AssetRegistry> {
         let mut graph = DependencyGraph::new();
@@ -394,6 +426,12 @@ impl RegistryBuilder {
             }
         }
 
+        // Targets (no dependencies on other assets)
+        for target in self.targets.values() {
+            let id = AssetId::target(&target.name);
+            graph.register(id);
+        }
+
         // Compute build order via topological sort
         let build_order = graph.topological_sort().map_err(|e| PxError::Build {
             message: e.to_string(),
@@ -408,6 +446,7 @@ impl RegistryBuilder {
             shapes: self.shapes,
             prefabs: self.prefabs,
             maps: self.maps,
+            targets: self.targets,
             graph,
             build_order,
         })

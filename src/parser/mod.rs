@@ -35,6 +35,7 @@ pub mod shader;
 pub mod shape;
 pub mod span;
 pub mod stamp;
+pub mod target;
 pub mod types;
 
 // Re-export main entry points
@@ -47,7 +48,5 @@ pub use shader::parse_shader_file;
 pub use shape::parse_shape_file;
 pub use span::{Location, Span, Spanned};
 pub use stamp::parse_stamp_file;
+pub use target::parse_target_file;
 pub use types::{LegendValue, RawDocument};
-
-// Future parser modules for specific file types:
-// pub mod target;

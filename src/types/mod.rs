@@ -19,13 +19,15 @@ mod prefab;
 mod shader;
 mod shape;
 mod stamp;
+mod target;
 
 pub use brush::{Brush, BuiltinBrushes};
 pub use colour::Colour;
 pub use expr::{ColourExpr, ExprEvaluator};
 pub use map::{Map, MapInstance, MapMetadata};
 pub use palette::{Palette, PaletteBuilder};
-pub use prefab::Prefab;
+pub use prefab::{Prefab, PrefabInstance, PrefabMetadata};
 pub use shader::{BuiltinShaders, Effect, EffectParam, Shader, ShaderBuilder};
-pub use shape::{LegendEntry, Shape};
+pub use shape::{LegendEntry, Shape, ShapeMetadata};
 pub use stamp::{BuiltinStamps, PixelToken, Stamp};
+pub use target::{BuiltinTargets, PaletteMode, SheetConfig, Target, TargetBuilder};

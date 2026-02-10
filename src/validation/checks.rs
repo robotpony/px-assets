@@ -415,11 +415,33 @@ pub fn check_palette_refs(registry: &AssetRegistry) -> ValidationResult {
     result
 }
 
+/// Check that all targets use a supported format.
+pub fn check_target_format(registry: &AssetRegistry) -> ValidationResult {
+    let mut result = ValidationResult::new();
+
+    for target in registry.targets() {
+        if target.format != "png" {
+            result.push(
+                Diagnostic::warning(
+                    "px::validate::unsupported-target-format",
+                    format!(
+                        "Target '{}' uses format '{}' which is not yet supported",
+                        target.name, target.format
+                    ),
+                )
+                .with_help("Only 'png' format is currently supported"),
+            );
+        }
+    }
+
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::registry::RegistryBuilder;
-    use crate::types::{Map, Prefab, Shape, Stamp, PixelToken};
+    use crate::types::{Map, Prefab, Shape, Stamp, PixelToken, Target};
     use std::collections::HashMap;
 
     fn build_registry(builder: RegistryBuilder) -> AssetRegistry {
@@ -621,5 +643,25 @@ mod tests {
 
         let result = check_stamp_sizes(&registry);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_check_target_format_png_ok() {
+        let mut builder = RegistryBuilder::new();
+        builder.add_target(Target::new("web", "png"));
+        let registry = build_registry(builder);
+
+        let result = check_target_format(&registry);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_check_target_format_unsupported() {
+        let mut builder = RegistryBuilder::new();
+        builder.add_target(Target::new("pico", "p8"));
+        let registry = build_registry(builder);
+
+        let result = check_target_format(&registry);
+        assert!(result.has_warnings());
     }
 }

@@ -24,6 +24,21 @@
 
 use std::collections::HashMap;
 
+use serde::Serialize;
+
+/// Metadata about a rendered shape, for JSON export.
+#[derive(Debug, Clone, Serialize)]
+pub struct ShapeMetadata {
+    /// Shape name.
+    pub name: String,
+
+    /// Pixel dimensions [width, height].
+    pub size: [usize; 2],
+
+    /// Tags from frontmatter.
+    pub tags: Vec<String>,
+}
+
 /// A shape definition - an ASCII grid that maps to stamps/brushes.
 #[derive(Debug, Clone)]
 pub struct Shape {

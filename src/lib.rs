@@ -15,10 +15,11 @@ pub mod validation;
 pub use discovery::{discover, discover_paths, DiscoveryResult, LoadOptions, Manifest, ScanResult};
 pub use error::{PxError, Result};
 pub use registry::{AssetId, AssetKind, AssetRegistry, RegistryBuilder};
-pub use render::{scale_pixels, write_png, MapRenderer, PrefabRenderer, RenderedShape, ShapeRenderer};
+pub use render::{scale_pixels, write_png, write_sheet_json, MapRenderer, PrefabRenderer, RenderedShape, ShapeRenderer, SheetMeta, SheetPacker};
 pub use types::{
-    Brush, BuiltinBrushes, BuiltinShaders, BuiltinStamps, Colour, ColourExpr, Effect, EffectParam,
-    ExprEvaluator, LegendEntry, Map, MapInstance, MapMetadata, Palette, PixelToken, Prefab, Shader,
-    ShaderBuilder, Shape, Stamp,
+    Brush, BuiltinBrushes, BuiltinShaders, BuiltinStamps, BuiltinTargets, Colour, ColourExpr,
+    Effect, EffectParam, ExprEvaluator, LegendEntry, Map, MapInstance, MapMetadata, Palette,
+    PaletteMode, PixelToken, Prefab, PrefabInstance, PrefabMetadata, Shader, ShaderBuilder, Shape,
+    ShapeMetadata, SheetConfig, Stamp, Target, TargetBuilder,
 };
 pub use validation::{validate_registry, Diagnostic, Severity, ValidationResult};

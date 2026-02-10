@@ -7,8 +7,10 @@ mod map;
 mod png;
 mod prefab;
 mod shape;
+mod sheet;
 
 pub use map::MapRenderer;
 pub use png::{scale_pixels, write_png};
 pub use prefab::PrefabRenderer;
 pub use shape::{RenderedShape, ShapeRenderer};
+pub use sheet::{write_sheet_json, SheetMeta, SheetPacker};

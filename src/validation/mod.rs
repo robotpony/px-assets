@@ -23,6 +23,7 @@ pub fn validate_registry(registry: &AssetRegistry) -> ValidationResult {
     result.merge(checks::check_unused_legends(registry));
     result.merge(checks::check_stamp_sizes(registry));
     result.merge(checks::check_palette_refs(registry));
+    result.merge(checks::check_target_format(registry));
 
     result
 }

@@ -124,6 +124,7 @@ pub fn discover_paths(paths: &[PathBuf]) -> Result<DiscoveryResult> {
                     crate::registry::AssetKind::Shape => scan.shapes.push(path.clone()),
                     crate::registry::AssetKind::Prefab => scan.prefabs.push(path.clone()),
                     crate::registry::AssetKind::Map => scan.maps.push(path.clone()),
+                    crate::registry::AssetKind::Target => scan.targets.push(path.clone()),
                 }
             }
         }

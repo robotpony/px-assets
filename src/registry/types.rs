@@ -15,6 +15,7 @@ pub enum AssetKind {
     Shape,
     Prefab,
     Map,
+    Target,
 }
 
 impl AssetKind {
@@ -28,6 +29,7 @@ impl AssetKind {
             AssetKind::Shape => "shape.md",
             AssetKind::Prefab => "prefab.md",
             AssetKind::Map => "map.md",
+            AssetKind::Target => "target.md",
         }
     }
 
@@ -41,6 +43,7 @@ impl AssetKind {
             AssetKind::Shape => "shape",
             AssetKind::Prefab => "prefab",
             AssetKind::Map => "map",
+            AssetKind::Target => "target",
         }
     }
 }
@@ -103,6 +106,11 @@ impl AssetId {
     /// Create a map asset ID.
     pub fn map(name: impl Into<String>) -> Self {
         Self::new(AssetKind::Map, name)
+    }
+
+    /// Create a target asset ID.
+    pub fn target(name: impl Into<String>) -> Self {
+        Self::new(AssetKind::Target, name)
     }
 }
 

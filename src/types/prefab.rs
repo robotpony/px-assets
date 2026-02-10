@@ -27,6 +27,40 @@
 
 use std::collections::HashMap;
 
+use serde::Serialize;
+
+/// Metadata about a rendered prefab, for JSON export.
+#[derive(Debug, Clone, Serialize)]
+pub struct PrefabMetadata {
+    /// Prefab name.
+    pub name: String,
+
+    /// Pixel dimensions [width, height].
+    pub size: [usize; 2],
+
+    /// Tags from frontmatter.
+    pub tags: Vec<String>,
+
+    /// Cell dimensions [cols, rows].
+    pub grid: [usize; 2],
+
+    /// Pixel size of each cell [width, height].
+    pub cell_size: [usize; 2],
+
+    /// Instances placed in the prefab.
+    pub shapes: Vec<PrefabInstance>,
+}
+
+/// A shape/prefab instance placed in a prefab.
+#[derive(Debug, Clone, Serialize)]
+pub struct PrefabInstance {
+    /// Shape or prefab name.
+    pub name: String,
+
+    /// Pixel positions where this shape appears.
+    pub positions: Vec<[usize; 2]>,
+}
+
 /// A prefab definition - an ASCII placement grid that maps to shapes/prefabs.
 #[derive(Debug, Clone)]
 pub struct Prefab {

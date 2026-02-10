@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 
 use crate::error::{PxError, Result};
-use crate::types::{Colour, Prefab};
+use crate::types::{Colour, Prefab, PrefabInstance, PrefabMetadata};
 
 use super::RenderedShape;
 
@@ -30,11 +30,20 @@ impl PrefabRenderer {
     }
 
     /// Render a prefab by compositing referenced shapes onto a canvas.
-    pub fn render(&self, prefab: &Prefab) -> Result<RenderedShape> {
+    /// Returns both the composited image and instance metadata.
+    pub fn render(&self, prefab: &Prefab) -> Result<(RenderedShape, PrefabMetadata)> {
         if prefab.is_empty() {
-            return Ok(RenderedShape::new(
-                &prefab.name,
-                vec![vec![Colour::TRANSPARENT]],
+            let metadata = PrefabMetadata {
+                name: prefab.name.clone(),
+                size: [1, 1],
+                tags: prefab.tags.clone(),
+                grid: [0, 0],
+                cell_size: [1, 1],
+                shapes: vec![],
+            };
+            return Ok((
+                RenderedShape::new(&prefab.name, vec![vec![Colour::TRANSPARENT]]),
+                metadata,
             ));
         }
 
@@ -45,6 +54,9 @@ impl PrefabRenderer {
         let canvas_w = prefab.width() * cell_w;
         let canvas_h = prefab.height() * cell_h;
         let mut pixels = vec![vec![Colour::TRANSPARENT; canvas_w]; canvas_h];
+
+        // Track instances: name -> list of pixel positions
+        let mut instance_positions: HashMap<String, Vec<[usize; 2]>> = HashMap::new();
 
         // Place each referenced shape
         for (cx, cy, glyph) in prefab.iter_cells() {
@@ -70,9 +82,33 @@ impl PrefabRenderer {
             let dest_x = cx * cell_w;
             let dest_y = cy * cell_h;
             blit(&mut pixels, source, dest_x, dest_y);
+
+            // Track instance position
+            instance_positions
+                .entry(ref_name.to_string())
+                .or_default()
+                .push([dest_x, dest_y]);
         }
 
-        Ok(RenderedShape::new(&prefab.name, pixels))
+        // Build metadata
+        let mut shapes: Vec<PrefabInstance> = instance_positions
+            .into_iter()
+            .map(|(name, positions)| PrefabInstance { name, positions })
+            .collect();
+
+        // Sort for deterministic output
+        shapes.sort_by(|a, b| a.name.cmp(&b.name));
+
+        let metadata = PrefabMetadata {
+            name: prefab.name.clone(),
+            size: [canvas_w, canvas_h],
+            tags: prefab.tags.clone(),
+            grid: [prefab.width(), prefab.height()],
+            cell_size: [cell_w, cell_h],
+            shapes,
+        };
+
+        Ok((RenderedShape::new(&prefab.name, pixels), metadata))
     }
 
     /// Calculate the uniform cell size (max width x max height of all referenced shapes).
@@ -157,13 +193,20 @@ mod tests {
             legend,
         );
 
-        let result = renderer.render(&prefab).unwrap();
+        let (result, metadata) = renderer.render(&prefab).unwrap();
 
         // 1 col x 2 rows, each cell 2x2 = 2x4 pixels
         assert_eq!(result.width(), 2);
         assert_eq!(result.height(), 4);
         assert_eq!(result.get(0, 0), Some(red()));
         assert_eq!(result.get(0, 2), Some(blue()));
+
+        // Check metadata
+        assert_eq!(metadata.name, "stack");
+        assert_eq!(metadata.size, [2, 4]);
+        assert_eq!(metadata.grid, [1, 2]);
+        assert_eq!(metadata.cell_size, [2, 2]);
+        assert_eq!(metadata.shapes.len(), 2);
     }
 
     #[test]
@@ -181,7 +224,7 @@ mod tests {
             legend,
         );
 
-        let result = renderer.render(&prefab).unwrap();
+        let (result, _) = renderer.render(&prefab).unwrap();
 
         // 3 cols x 1 row, each cell 2x2 = 6x2 pixels
         assert_eq!(result.width(), 6);
@@ -218,7 +261,7 @@ mod tests {
             legend,
         );
 
-        let result = renderer.render(&prefab).unwrap();
+        let (result, _) = renderer.render(&prefab).unwrap();
 
         // Cell size = max(4,1) x max(1,3) = 4x3
         // 2 cols x 1 row = 8x3 pixels
@@ -254,7 +297,7 @@ mod tests {
             legend1,
         );
 
-        let rendered_wall = renderer.render(&inner).unwrap();
+        let (rendered_wall, _) = renderer.render(&inner).unwrap();
         // wall = 4x2 (2 cells of 2x2)
         assert_eq!(rendered_wall.width(), 4);
         assert_eq!(rendered_wall.height(), 2);
@@ -272,7 +315,7 @@ mod tests {
             legend2,
         );
 
-        let result = renderer.render(&outer).unwrap();
+        let (result, _) = renderer.render(&outer).unwrap();
 
         // Cell size = 4x2, grid = 1x2 = 4x4 pixels
         assert_eq!(result.width(), 4);
@@ -321,8 +364,9 @@ mod tests {
         let renderer = PrefabRenderer::new();
         let prefab = Prefab::new("empty", vec![], vec![], HashMap::new());
 
-        let result = renderer.render(&prefab).unwrap();
+        let (result, metadata) = renderer.render(&prefab).unwrap();
         assert_eq!(result.width(), 1);
         assert_eq!(result.height(), 1);
+        assert!(metadata.shapes.is_empty());
     }
 }
