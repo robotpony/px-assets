@@ -59,7 +59,7 @@ impl MapRenderer {
 
         // Place each referenced shape
         for (cx, cy, glyph) in map.iter_cells() {
-            if glyph == ' ' {
+            if glyph == ' ' && map.get_legend(' ').is_none() {
                 continue;
             }
 

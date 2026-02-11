@@ -60,7 +60,7 @@ impl PrefabRenderer {
 
         // Place each referenced shape
         for (cx, cy, glyph) in prefab.iter_cells() {
-            if glyph == ' ' {
+            if glyph == ' ' && prefab.get_legend(' ').is_none() {
                 continue;
             }
 

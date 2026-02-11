@@ -4,28 +4,28 @@ tags: "#ghost #enemy"
 ---
 
 ```px
-xxxxRRRRRRxxxxxx
-xxRRRRRRRRRRxxxx
-xRRRRRRRRRRRRxxx
-RRRWWRRRRWWRRRxx
-RRWWWWRRWWWWRRRR
-RRBWBWRRBWBWRRRR
-RRWWWWRRWWWWRRRR
-RRRRRRRRRRRRRRxx
-RRRRRRRRRRRRRRxx
-RRRRRRRRRRRRRRxx
-RRRRRRRRRRRRRRxx
-RRRRRRRRRRRRRRxx
-RRxRRRRxxRRRRxxx
-RxxRRRRxxRRRRxxR
-xxxxRRxxxxRRxxxx
+xxxxxRRRRRRxxxxx
+xxxRRRRRRRRRRxxx
+xxRRRRRRRRRRRRxx
+xRRRWWRRRRWWRRRx
+xRWWWWRRRRWWWWRx
+xRWBBWRRRRWBBWRx
+xRWWWWRRRRWWWWRx
+xRRRRRRRRRRRRRRx
+xRRRRRRRRRRRRRRx
+xRRRRRRRRRRRRRRx
+xRRRRRRRRRRRRRRx
+xRRRRRRRRRRRRRRx
+xRRRRxRRRRxRRRRx
+xxRRxxxRRxxxRRxx
+xxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxx
 ```
 
 ---
 R: { stamp: solid, A: $red }
 W: { stamp: solid, A: $white }
-B: { stamp: solid, A: $dark-blue }
+B: { stamp: solid, A: $blue }
 
 ---
 name: pinky
@@ -33,28 +33,28 @@ tags: "#ghost #enemy"
 ---
 
 ```px
-xxxxPPPPPPxxxxxx
-xxPPPPPPPPPPxxxx
-xPPPPPPPPPPPPxxx
-PPPWWPPPPWWPPPxx
-PPWWWWPPWWWWPPPP
-PPBWBWPPBWBWPPPP
-PPWWWWPPWWWWPPPP
-PPPPPPPPPPPPPPxx
-PPPPPPPPPPPPPPxx
-PPPPPPPPPPPPPPxx
-PPPPPPPPPPPPPPxx
-PPPPPPPPPPPPPPxx
-PPxPPPPxxPPPPxxx
-PxxPPPPxxPPPPxxP
-xxxxPPxxxxPPxxxx
+xxxxxPPPPPPxxxxx
+xxxPPPPPPPPPPxxx
+xxPPPPPPPPPPPPxx
+xPPPWWPPPPWWPPPx
+xPWWWWPPPPWWWWPx
+xPWBBWPPPPWBBWPx
+xPWWWWPPPPWWWWPx
+xPPPPPPPPPPPPPPx
+xPPPPPPPPPPPPPPx
+xPPPPPPPPPPPPPPx
+xPPPPPPPPPPPPPPx
+xPPPPPPPPPPPPPPx
+xPPPPxPPPPxPPPPx
+xxPPxxxPPxxxPPxx
+xxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxx
 ```
 
 ---
 P: { stamp: solid, A: $pink }
 W: { stamp: solid, A: $white }
-B: { stamp: solid, A: $dark-blue }
+B: { stamp: solid, A: $blue }
 
 ---
 name: inky
@@ -62,28 +62,28 @@ tags: "#ghost #enemy"
 ---
 
 ```px
-xxxxCCCCCCxxxxxx
-xxCCCCCCCCCCxxxx
-xCCCCCCCCCCCCxxx
-CCCWWCCCCWWCCCxx
-CCWWWWCCWWWWCCCC
-CCBWBWCCBWBWCCCC
-CCWWWWCCWWWWCCCC
-CCCCCCCCCCCCCCxx
-CCCCCCCCCCCCCCxx
-CCCCCCCCCCCCCCxx
-CCCCCCCCCCCCCCxx
-CCCCCCCCCCCCCCxx
-CCxCCCCxxCCCCxxx
-CxxCCCCxxCCCCxxC
-xxxxCCxxxxCCxxxx
+xxxxxCCCCCCxxxxx
+xxxCCCCCCCCCCxxx
+xxCCCCCCCCCCCCxx
+xCCCWWCCCCWWCCCx
+xCWWWWCCCCWWWWCx
+xCWBBWCCCCWBBWCx
+xCWWWWCCCCWWWWCx
+xCCCCCCCCCCCCCCx
+xCCCCCCCCCCCCCCx
+xCCCCCCCCCCCCCCx
+xCCCCCCCCCCCCCCx
+xCCCCCCCCCCCCCCx
+xCCCCxCCCCxCCCCx
+xxCCxxxCCxxxCCxx
+xxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxx
 ```
 
 ---
 C: { stamp: solid, A: $cyan }
 W: { stamp: solid, A: $white }
-B: { stamp: solid, A: $dark-blue }
+B: { stamp: solid, A: $blue }
 
 ---
 name: clyde
@@ -91,28 +91,28 @@ tags: "#ghost #enemy"
 ---
 
 ```px
-xxxxOOOOOOxxxxxx
-xxOOOOOOOOOOxxxx
-xOOOOOOOOOOOOxxx
-OOOWWOOOOWWOOOxx
-OOWWWWOOWWWWOOOO
-OOBWBWOOBWBWOOOO
-OOWWWWOOWWWWOOOO
-OOOOOOOOOOOOOOxx
-OOOOOOOOOOOOOOxx
-OOOOOOOOOOOOOOxx
-OOOOOOOOOOOOOOxx
-OOOOOOOOOOOOOOxx
-OOxOOOOxxOOOOxxx
-OxxOOOOxxOOOOxxO
-xxxxOOxxxxOOxxxx
+xxxxxOOOOOOxxxxx
+xxxOOOOOOOOOOxxx
+xxOOOOOOOOOOOOxx
+xOOOWWOOOOWWOOOx
+xOWWWWOOOOWWWWOx
+xOWBBWOOOOWBBWOx
+xOWWWWOOOOWWWWOx
+xOOOOOOOOOOOOOOx
+xOOOOOOOOOOOOOOx
+xOOOOOOOOOOOOOOx
+xOOOOOOOOOOOOOOx
+xOOOOOOOOOOOOOOx
+xOOOOxOOOOxOOOOx
+xxOOxxxOOxxxOOxx
+xxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxx
 ```
 
 ---
 O: { stamp: solid, A: $orange }
 W: { stamp: solid, A: $white }
-B: { stamp: solid, A: $dark-blue }
+B: { stamp: solid, A: $blue }
 
 ---
 name: ghost-frightened
@@ -120,26 +120,26 @@ tags: "#ghost #powerup"
 ---
 
 ```px
-xxxxFFFFFFxxxxxx
-xxFFFFFFFFFFxxxx
-xFFFFFFFFFFFFFxx
-FFFFFFFFFFFFFFxx
-FFFFFFFFFFFFFFxx
-FFFFFFFFFFFFFFxx
-FFWWFFFFFFWWFFxx
-FFWWFFFFFFWWFFxx
-FFFFFFFFFFFFFFxx
-FFFWFFWWFFWFFFxx
-FFWxWWxxWWxWFFxx
-FFFFFFFFFFFFFFxx
-FFxFFFFxxFFFFxxx
-FxxFFFFxxFFFFxxF
-xxxxFFxxxxFFxxxx
+xxxxxFFFFFFxxxxx
+xxxFFFFFFFFFFxxx
+xxFFFFFFFFFFFFxx
+xFFFFFFFFFFFFFFx
+xFFFFFFFFFFFFFFx
+xFFFFFFFFFFFFFFx
+xFFWWFFFFFFWWFFx
+xFFWWFFFFFFWWFFx
+xFFFFFFFFFFFFFFx
+xFFFWFFWWFFWFFFx
+xFFWxWWxxWWxWFFx
+xFFFFFFFFFFFFFFx
+xFFFFxFFFFxFFFFx
+xxFFxxxFFxxxFFxx
+xxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxx
 ```
 
 ---
-F: { stamp: solid, A: $dark-blue }
+F: { stamp: solid, A: $blue }
 W: { stamp: solid, A: $white }
 
 ---
@@ -151,10 +151,10 @@ tags: "#ghost"
 xxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxx
-xxxWWxxxxWWxxxxx
-xxWWWWxxWWWWxxxx
-xxBWBWxxBWBWxxxx
-xxWWWWxxWWWWxxxx
+xxxxWWxxxxWWxxxx
+xxWWWWxxxxWWWWxx
+xxWBBWxxxxWBBWxx
+xxWWWWxxxxWWWWxx
 xxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxx
@@ -168,4 +168,4 @@ xxxxxxxxxxxxxxxx
 
 ---
 W: { stamp: solid, A: $white }
-B: { stamp: solid, A: $dark-blue }
+B: { stamp: solid, A: $blue }

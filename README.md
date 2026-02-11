@@ -24,7 +24,7 @@ The same shape can be rendered with different palettes, at different scales, for
 
 ## Status
 
-**Phase 2.8 complete** - Directory-aware build and `px init`.
+**Phase 2.9 complete** - Cargo-style coloured CLI output.
 
 `px build` now discovers assets automatically:
 

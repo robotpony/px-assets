@@ -2,15 +2,43 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.19.0] - 2026-02-09
+## [0.19.0] - 2026-02-10
 
 ### Added
 
+- Cargo-style coloured CLI output for all commands
+  - Right-aligned verbs: `Compiling` (shapes), `Composing` (prefabs), `Charting` (maps), `Packing` (sheets), `Finished` (summary)
+  - Asset dimensions shown per-line, e.g. `Compiling player-stand (4x4)`
+  - Maps show unique shape count, e.g. `Charting maze (224x168, 10 shapes)`
+  - Colour auto-detected via `IsTerminal`; disabled when piped
+  - All status output goes to stderr (Cargo convention); stdout reserved for machine-readable output
+  - Zero new dependencies (raw ANSI escapes behind `IsTerminal` check)
+- `Printer` module (`src/output.rs`) for consistent terminal formatting
 - Pac-Man example project (`examples/pac-man/`)
   - Full arcade sprite set: Pac-Man (9 frames), 4 ghosts + frightened + eyes, cherry, maze tiles
   - Demonstrates multi-colour sprites via brush colour bindings (`{ stamp: solid, A: $colour }`)
   - 28x21 tile maze map with ghost pen, power pellets, and dot paths
   - README with build commands and technique explanation
+
+### Fixed
+
+- Map and prefab renderers now respect legend entries for space characters
+  - Previously, spaces were hardcoded to skip (transparent) before checking the legend
+  - Maps with `" ": some-tile` in the legend now render that tile instead of leaving gaps
+  - Fixes ghost pen interior in Pac-Man example rendering as transparent instead of black
+- Map shape count in CLI output now counts unique shapes, not legend entries
+- Pluralization in discovery summary ("1 map" not "1 maps")
+- Output paths shown as relative when inside working directory
+- Example: Pac-Man ghost sprites corrected
+  - Ghost pupils changed from striped (BWBW) to solid centered (WBBW) pattern
+  - Palette `$blue`/`$dark-blue` names swapped to match actual brightness (`$blue` is now the brighter #2121FF)
+  - Ghost body and eye positions centered symmetrically in 16px grid
+
+### Changed
+
+- `print_diagnostics()` now accepts a `&Printer` for coloured error/warning/help output
+- Validation summary uses `Passed`/`Failed` verbs with colour
+- `px init` output uses structured status lines (`Scanning`, `Discovered`, `Created`)
 
 ## [0.18.2] - 2026-02-09
 

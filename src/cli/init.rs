@@ -10,6 +10,7 @@ use clap::Args;
 
 use crate::discovery::{discover, MANIFEST_FILENAME};
 use crate::error::{PxError, Result};
+use crate::output::{display_path, plural, Printer};
 
 /// Initialize a px project by generating a px.yaml manifest
 #[derive(Args, Debug)]
@@ -24,6 +25,7 @@ pub struct InitArgs {
 }
 
 pub fn run(args: InitArgs) -> Result<()> {
+    let printer = Printer::new();
     let manifest_path = args.path.join(MANIFEST_FILENAME);
 
     // Check for existing manifest
@@ -35,6 +37,7 @@ pub fn run(args: InitArgs) -> Result<()> {
     }
 
     // Discover assets (no manifest yet, so convention scanning)
+    printer.status("Scanning", &display_path(&args.path));
     let discovery = discover(&args.path)?;
     let scan = &discovery.scan;
 
@@ -91,13 +94,15 @@ pub fn run(args: InitArgs) -> Result<()> {
     })?;
 
     let total = all_files.len();
-    let dir_count = source_dirs.len();
-    println!(
-        "Created {} with {} source director{} ({} assets found)",
-        MANIFEST_FILENAME,
-        dir_count,
-        if dir_count == 1 { "y" } else { "ies" },
-        total,
+
+    if !source_dirs.is_empty() {
+        let dirs: Vec<&str> = source_dirs.iter().map(|s| s.as_str()).collect();
+        printer.info("Discovered", &dirs.join(", "));
+    }
+
+    printer.success(
+        "Created",
+        &format!("{} ({} found)", MANIFEST_FILENAME, plural(total, "asset", "assets")),
     );
 
     Ok(())

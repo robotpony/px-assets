@@ -8,9 +8,10 @@ use std::path::PathBuf;
 use clap::Args;
 
 use crate::discovery::{discover, discover_paths, load_assets, LoadOptions};
-use crate::registry::AssetRegistry;
 use crate::error::{PxError, Result};
+use crate::output::{display_path, plural, Printer};
 use crate::parser::{parse_map_file, parse_prefab_file, parse_shape_file, parse_shader_file, parse_target_file};
+use crate::registry::AssetRegistry;
 use crate::render::{write_png, write_sheet_json, MapRenderer, PrefabRenderer, RenderedShape, ShapeRenderer, SheetPacker};
 use crate::types::{BuiltinBrushes, BuiltinShaders, BuiltinStamps, BuiltinTargets, Palette, Shader, ShapeMetadata, SheetConfig, Target};
 use crate::validation::{print_diagnostics, validate_registry};
@@ -51,6 +52,8 @@ pub struct BuildArgs {
 }
 
 pub fn run(args: BuildArgs) -> Result<()> {
+    let printer = Printer::new();
+
     // Discover assets: no args = scan current dir (reads px.yaml), args = explicit paths
     let discovery = if args.files.is_empty() {
         discover(".")?
@@ -65,12 +68,15 @@ pub fn run(args: BuildArgs) -> Result<()> {
     // Print discovery summary
     if args.files.is_empty() {
         let manifest_note = if discovery.has_manifest { " (using px.yaml)" } else { "" };
-        eprintln!(
-            "Discovered {} shapes, {} prefabs, {} maps{}",
-            shape_files.len(),
-            prefab_files.len(),
-            map_files.len(),
-            manifest_note,
+        printer.info(
+            "Discovered",
+            &format!(
+                "{}, {}, {}{}",
+                plural(shape_files.len(), "shape", "shapes"),
+                plural(prefab_files.len(), "prefab", "prefabs"),
+                plural(map_files.len(), "map", "maps"),
+                manifest_note,
+            ),
         );
     }
 
@@ -87,7 +93,7 @@ pub fn run(args: BuildArgs) -> Result<()> {
     // Run validation if requested
     if args.validate {
         let result = validate_registry(&registry);
-        print_diagnostics(&result);
+        print_diagnostics(&result, &printer);
 
         if result.has_errors() {
             return Err(PxError::Build {
@@ -171,7 +177,7 @@ pub fn run(args: BuildArgs) -> Result<()> {
 
     for file in shape_files {
         let (count, rendered) =
-            process_shape_file(file, &output, effective_scale, &renderer, write_individual)?;
+            process_shape_file(file, &output, effective_scale, &renderer, write_individual, &printer)?;
         total_shapes += count;
         rendered_shapes.extend(rendered);
     }
@@ -187,7 +193,7 @@ pub fn run(args: BuildArgs) -> Result<()> {
 
         for file in prefab_files {
             let (count, rendered) =
-                process_prefab_file(file, &output, effective_scale, &mut prefab_renderer, write_individual)?;
+                process_prefab_file(file, &output, effective_scale, &mut prefab_renderer, write_individual, &printer)?;
             total_prefabs += count;
             rendered_prefabs.extend(rendered);
         }
@@ -205,9 +211,11 @@ pub fn run(args: BuildArgs) -> Result<()> {
         }
 
         for file in map_files {
-            total_maps += process_map_file(file, &output, effective_scale, &map_renderer)?;
+            total_maps += process_map_file(file, &output, effective_scale, &map_renderer, &printer)?;
         }
     }
+
+    let out_display = display_path(&output);
 
     // Sheet packing mode: combine all sprites into one sheet
     if use_sheet {
@@ -227,15 +235,25 @@ pub fn run(args: BuildArgs) -> Result<()> {
         write_sheet_json(&meta, &json_path)?;
 
         let total = total_shapes + total_prefabs;
-        println!(
-            "Packed {} sprite(s) into {} + {}",
-            total,
-            png_path.display(),
-            json_path.display()
+        let (sw, sh) = (sheet.width(), sheet.height());
+        printer.status(
+            "Packing",
+            &format!(
+                "{} into sheet {}",
+                plural(total, "sprite", "sprites"),
+                printer.dim(&format!("({}x{})", sw * sheet_scale as usize, sh * sheet_scale as usize)),
+            ),
+        );
+        printer.success(
+            "Finished",
+            &format!("sheet.png + sheet.json -> {}", out_display),
         );
     } else {
         let total = total_shapes + total_prefabs + total_maps;
-        println!("Built {} asset(s) to {}", total, output.display());
+        printer.success(
+            "Finished",
+            &format!("{} -> {}", plural(total, "asset", "assets"), out_display),
+        );
     }
 
     Ok(())
@@ -250,6 +268,7 @@ fn process_shape_file(
     default_scale: Option<u32>,
     renderer: &ShapeRenderer,
     write_png_files: bool,
+    printer: &Printer,
 ) -> Result<(usize, Vec<RenderedShape>)> {
     let source = fs::read_to_string(path).map_err(|e| PxError::Io {
         path: path.clone(),
@@ -268,6 +287,15 @@ fn process_shape_file(
 
         let rendered = renderer.render(shape);
 
+        printer.status(
+            "Compiling",
+            &format!(
+                "{} {}",
+                printer.bold(&shape.name),
+                printer.dim(&format!("({}x{})", rendered.width(), rendered.height())),
+            ),
+        );
+
         if write_png_files {
             let png_name = format!("{}.png", shape.name);
             let png_path = output.join(&png_name);
@@ -282,8 +310,6 @@ fn process_shape_file(
             let json_name = format!("{}.json", shape.name);
             let json_path = output.join(&json_name);
             write_metadata_json(&metadata, &json_path)?;
-
-            println!("  {} -> {} + {}", shape.name, png_path.display(), json_path.display());
         }
 
         rendered_shapes.push(rendered);
@@ -302,6 +328,7 @@ fn process_prefab_file(
     default_scale: Option<u32>,
     prefab_renderer: &mut PrefabRenderer,
     write_png_files: bool,
+    printer: &Printer,
 ) -> Result<(usize, Vec<RenderedShape>)> {
     let source = fs::read_to_string(path).map_err(|e| PxError::Io {
         path: path.clone(),
@@ -320,6 +347,15 @@ fn process_prefab_file(
 
         let (rendered, metadata) = prefab_renderer.render(prefab)?;
 
+        printer.status(
+            "Composing",
+            &format!(
+                "{} {}",
+                printer.bold(&prefab.name),
+                printer.dim(&format!("({}x{})", rendered.width(), rendered.height())),
+            ),
+        );
+
         if write_png_files {
             let png_name = format!("{}.png", prefab.name);
             let png_path = output.join(&png_name);
@@ -329,8 +365,6 @@ fn process_prefab_file(
             let json_name = format!("{}.json", prefab.name);
             let json_path = output.join(&json_name);
             write_metadata_json(&metadata, &json_path)?;
-
-            println!("  {} -> {} + {}", prefab.name, png_path.display(), json_path.display());
         }
 
         // Add rendered prefab so later prefabs can reference it
@@ -347,6 +381,7 @@ fn process_map_file(
     output: &PathBuf,
     default_scale: Option<u32>,
     map_renderer: &MapRenderer,
+    printer: &Printer,
 ) -> Result<usize> {
     let source = fs::read_to_string(path).map_err(|e| PxError::Io {
         path: path.clone(),
@@ -364,6 +399,21 @@ fn process_map_file(
 
         let (rendered, metadata) = map_renderer.render(map)?;
 
+        let shape_count = map.referenced_names().len();
+        printer.status(
+            "Charting",
+            &format!(
+                "{} {}",
+                printer.bold(&map.name),
+                printer.dim(&format!(
+                    "({}x{}, {})",
+                    rendered.width(),
+                    rendered.height(),
+                    plural(shape_count, "shape", "shapes"),
+                )),
+            ),
+        );
+
         // Write PNG
         let png_name = format!("{}.png", map.name);
         let png_path = output.join(&png_name);
@@ -373,8 +423,6 @@ fn process_map_file(
         let json_name = format!("{}.json", map.name);
         let json_path = output.join(&json_name);
         write_metadata_json(&metadata, &json_path)?;
-
-        println!("  {} -> {} + {}", map.name, png_path.display(), json_path.display());
     }
 
     Ok(maps.len())

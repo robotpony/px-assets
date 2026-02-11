@@ -8,6 +8,7 @@ mod warning;
 
 pub use warning::{Diagnostic, Severity, ValidationResult};
 
+use crate::output::{plural, Printer};
 use crate::registry::AssetRegistry;
 
 /// Run all validation checks against the registry.
@@ -28,16 +29,16 @@ pub fn validate_registry(registry: &AssetRegistry) -> ValidationResult {
     result
 }
 
-/// Print diagnostics to stderr.
-pub fn print_diagnostics(result: &ValidationResult) {
+/// Print diagnostics to stderr with coloured output.
+pub fn print_diagnostics(result: &ValidationResult, printer: &Printer) {
     for d in result.iter() {
-        let severity = match d.severity {
-            Severity::Error => "error",
-            Severity::Warning => "warning",
-        };
-        eprintln!("  {}[{}]: {}", severity, d.code, d.message);
+        let is_error = matches!(d.severity, Severity::Error);
+        let label = if is_error { "error" } else { "warning" };
+        let severity = printer.severity(label, is_error);
+        let code = printer.dim(&format!("[{}]", d.code));
+        eprintln!("      {}{}: {}", severity, code, d.message);
         if let Some(help) = &d.help {
-            eprintln!("    help: {}", help);
+            eprintln!("             {}: {}", printer.cyan("help"), help);
         }
     }
 
@@ -45,14 +46,17 @@ pub fn print_diagnostics(result: &ValidationResult) {
     let warnings = result.warning_count();
 
     if errors > 0 {
-        eprintln!(
-            "Validation failed: {} error(s), {} warning(s)",
-            errors, warnings
+        printer.error(
+            "Failed",
+            &format!("{}, {}", plural(errors, "error", "errors"), plural(warnings, "warning", "warnings")),
         );
     } else if warnings > 0 {
-        eprintln!("Validation passed ({} warning(s))", warnings);
+        printer.success(
+            "Passed",
+            &format!("({})", plural(warnings, "warning", "warnings")),
+        );
     } else {
-        eprintln!("Validation passed.");
+        printer.success("Passed", "all clear");
     }
 }
 
