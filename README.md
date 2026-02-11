@@ -34,6 +34,7 @@ px build
 
 # Build from a project directory
 px build examples/mission-improbable/
+px build examples/pac-man/ --scale 4
 
 # Build specific files (still works)
 px build shapes/*.shape.md prefabs/*.prefab.md -o dist

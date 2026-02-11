@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.19.0] - 2026-02-09
+
+### Added
+
+- Pac-Man example project (`examples/pac-man/`)
+  - Full arcade sprite set: Pac-Man (9 frames), 4 ghosts + frightened + eyes, cherry, maze tiles
+  - Demonstrates multi-colour sprites via brush colour bindings (`{ stamp: solid, A: $colour }`)
+  - 28x21 tile maze map with ghost pen, power pellets, and dot paths
+  - README with build commands and technique explanation
+
 ## [0.18.2] - 2026-02-09
 
 ### Fixed

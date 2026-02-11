@@ -7,7 +7,8 @@ use std::path::PathBuf;
 
 use clap::Args;
 
-use crate::discovery::{discover, discover_paths, LoadOptions};
+use crate::discovery::{discover, discover_paths, load_assets, LoadOptions};
+use crate::registry::AssetRegistry;
 use crate::error::{PxError, Result};
 use crate::parser::{parse_map_file, parse_prefab_file, parse_shape_file, parse_shader_file, parse_target_file};
 use crate::render::{write_png, write_sheet_json, MapRenderer, PrefabRenderer, RenderedShape, ShapeRenderer, SheetPacker};
@@ -79,11 +80,12 @@ pub fn run(args: BuildArgs) -> Result<()> {
         .clone()
         .unwrap_or_else(|| discovery.manifest.output.clone());
 
+    // Load assets into registry for palette/shader resolution
+    let builder = load_assets(&discovery.scan, &LoadOptions::with_builtins())?;
+    let registry = builder.build()?;
+
     // Run validation if requested
     if args.validate {
-        let builder =
-            crate::discovery::load_assets(&discovery.scan, &LoadOptions::with_builtins())?;
-        let registry = builder.build()?;
         let result = validate_registry(&registry);
         print_diagnostics(&result);
 
@@ -127,13 +129,14 @@ pub fn run(args: BuildArgs) -> Result<()> {
         .shader
         .clone()
         .or_else(|| target.as_ref().and_then(|t| t.shader.clone()))
-        .or_else(|| discovery.manifest.shader.clone());
+        .or_else(|| discovery.manifest.shader.clone())
+        .or_else(|| auto_detect_shader(&registry));
 
-    // Load shader (use builtin default if not specified)
-    let shader = load_shader_by_name(effective_shader_name.as_deref())?;
+    // Load shader from registry, builtins, or file
+    let shader = resolve_shader(effective_shader_name.as_deref(), &registry)?;
 
-    // Get palette from shader
-    let palette = load_palette_for_shader(&shader)?;
+    // Get palette from registry or default
+    let palette = resolve_palette(&shader, &registry)?;
 
     // Collect builtin stamps and brushes (need to own them for lifetime)
     let builtin_stamps = BuiltinStamps::all();
@@ -430,19 +433,37 @@ fn resolve_target(args: &BuildArgs) -> Result<Option<Target>> {
     })
 }
 
-/// Load shader by name or use builtin default.
-fn load_shader_by_name(name: Option<&str>) -> Result<Shader> {
+/// Auto-detect a shader when the project has exactly one non-default shader.
+fn auto_detect_shader(registry: &AssetRegistry) -> Option<String> {
+    let shaders: Vec<_> = registry
+        .shaders()
+        .filter(|s| s.name != "default")
+        .collect();
+    if shaders.len() == 1 {
+        Some(shaders[0].name.clone())
+    } else {
+        None
+    }
+}
+
+/// Resolve shader by name: registry > builtins > file path.
+fn resolve_shader(name: Option<&str>, registry: &AssetRegistry) -> Result<Shader> {
     let shader_name = match name {
         Some(n) => n,
         None => return Ok(BuiltinShaders::get("default").unwrap()),
     };
 
-    // Check if it's a builtin
+    // Check registry (discovered project shaders)
+    if let Some(shader) = registry.get_shader(shader_name) {
+        return Ok(shader.clone());
+    }
+
+    // Check builtins
     if let Some(shader) = BuiltinShaders::get(shader_name) {
         return Ok(shader);
     }
 
-    // Try to find shader file
+    // Try file path
     let shader_path = PathBuf::from(shader_name);
     if shader_path.exists() {
         let source = fs::read_to_string(&shader_path).map_err(|e| PxError::Io {
@@ -468,16 +489,18 @@ fn load_shader_by_name(name: Option<&str>) -> Result<Shader> {
     })
 }
 
-/// Load palette for a shader.
-fn load_palette_for_shader(shader: &Shader) -> Result<Palette> {
-    // For now, just use the default palette
-    // In Phase 2+, this will resolve palette by name
+/// Resolve palette for a shader: registry > default.
+fn resolve_palette(shader: &Shader, registry: &AssetRegistry) -> Result<Palette> {
     if shader.palette == "default" {
         return Ok(Palette::default_palette());
     }
 
-    // TODO: Implement palette file loading
-    // For now, fall back to default
+    // Look up palette by name in discovered project palettes
+    if let Some(palette) = registry.get_palette(&shader.palette) {
+        return Ok(palette.clone());
+    }
+
+    // Fall back to default
     Ok(Palette::default_palette())
 }
 
