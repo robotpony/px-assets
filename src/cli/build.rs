@@ -3,9 +3,12 @@
 //! Processes shape files and outputs PNG images.
 
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::sync::mpsc;
+use std::time::Duration;
 
 use clap::Args;
+use notify::{EventKind, RecursiveMode, Watcher};
 
 use crate::discovery::{discover, discover_paths, load_assets, LoadOptions};
 use crate::error::{PxError, Result};
@@ -49,9 +52,21 @@ pub struct BuildArgs {
     /// Padding between sprites in sheet (pixels)
     #[arg(long)]
     pub padding: Option<u32>,
+
+    /// Watch for changes and rebuild automatically
+    #[arg(long)]
+    pub watch: bool,
 }
 
 pub fn run(args: BuildArgs) -> Result<()> {
+    build_once(&args)?;
+    if args.watch {
+        watch_loop(&args)?;
+    }
+    Ok(())
+}
+
+fn build_once(args: &BuildArgs) -> Result<()> {
     let printer = Printer::new();
 
     // Discover assets: no args = scan current dir (reads px.yaml), args = explicit paths
@@ -254,6 +269,101 @@ pub fn run(args: BuildArgs) -> Result<()> {
             "Finished",
             &format!("{} -> {}", plural(total, "asset", "assets"), out_display),
         );
+    }
+
+    Ok(())
+}
+
+/// Asset file extensions that trigger a rebuild.
+const WATCH_EXTENSIONS: &[&str] = &[
+    ".palette.md",
+    ".stamp.md",
+    ".brush.md",
+    ".shader.md",
+    ".shape.md",
+    ".prefab.md",
+    ".map.md",
+    ".target.md",
+];
+
+/// Returns true if the path is a px asset file worth rebuilding for.
+fn is_asset_path(path: &Path) -> bool {
+    let filename = match path.file_name().and_then(|f| f.to_str()) {
+        Some(f) => f,
+        None => return false,
+    };
+    WATCH_EXTENSIONS.iter().any(|ext| filename.ends_with(ext))
+}
+
+/// Watch source directories and rebuild on changes.
+fn watch_loop(args: &BuildArgs) -> Result<()> {
+    let printer = Printer::new();
+
+    // Determine directories to watch
+    let watch_dirs: Vec<PathBuf> = if args.files.is_empty() {
+        vec![PathBuf::from(".")]
+    } else {
+        args.files
+            .iter()
+            .map(|p| {
+                if p.is_dir() {
+                    p.clone()
+                } else {
+                    p.parent().map(|d| d.to_path_buf()).unwrap_or_else(|| PathBuf::from("."))
+                }
+            })
+            .collect()
+    };
+
+    let (tx, rx) = mpsc::channel();
+
+    let mut watcher = notify::recommended_watcher(move |res: notify::Result<notify::Event>| {
+        if let Ok(event) = res {
+            let _ = tx.send(event);
+        }
+    })
+    .map_err(|e| PxError::Build {
+        message: format!("Failed to start file watcher: {}", e),
+        help: Some("Check file system permissions".to_string()),
+    })?;
+
+    for dir in &watch_dirs {
+        watcher.watch(dir, RecursiveMode::Recursive).map_err(|e| PxError::Build {
+            message: format!("Failed to watch {}: {}", dir.display(), e),
+            help: None,
+        })?;
+    }
+
+    let dirs_display: Vec<_> = watch_dirs.iter().map(|d| display_path(d)).collect();
+    printer.info("Watching", &dirs_display.join(", "));
+
+    loop {
+        // Block until we get an event
+        let event = match rx.recv() {
+            Ok(e) => e,
+            Err(_) => break, // Channel closed, watcher dropped
+        };
+
+        // Only rebuild for relevant file changes
+        let dominated_by_asset = match event.kind {
+            EventKind::Create(_) | EventKind::Modify(_) | EventKind::Remove(_) => {
+                event.paths.iter().any(|p| is_asset_path(p))
+            }
+            _ => false,
+        };
+
+        if !dominated_by_asset {
+            continue;
+        }
+
+        // Debounce: drain any additional events over 300ms
+        let deadline = Duration::from_millis(300);
+        while rx.recv_timeout(deadline).is_ok() {}
+
+        printer.info("Rebuilding", "change detected");
+        if let Err(e) = build_once(args) {
+            printer.error("Error", &format!("{}", e));
+        }
     }
 
     Ok(())
@@ -589,6 +699,7 @@ name: test-square
             validate: false,
             sheet: false,
             padding: None,
+            watch: false,
         };
 
         run(args).unwrap();
@@ -632,6 +743,7 @@ name: scaled-shape
             validate: false,
             sheet: false,
             padding: None,
+            watch: false,
         };
 
         run(args).unwrap();
@@ -680,6 +792,7 @@ name: shape-b
             validate: false,
             sheet: false,
             padding: None,
+            watch: false,
         };
 
         run(args).unwrap();
@@ -720,6 +833,7 @@ scale: 2
             validate: false,
             sheet: false,
             padding: None,
+            watch: false,
         };
 
         run(args).unwrap();
@@ -764,6 +878,7 @@ scale: 2
             validate: false,
             sheet: false,
             padding: None,
+            watch: false,
         };
 
         run(args).unwrap();
@@ -787,6 +902,7 @@ scale: 2
             validate: false,
             sheet: false,
             padding: None,
+            watch: false,
         };
 
         let target = resolve_target(&args).unwrap().unwrap();
@@ -806,6 +922,7 @@ scale: 2
             validate: false,
             sheet: false,
             padding: None,
+            watch: false,
         };
 
         let target = resolve_target(&args).unwrap().unwrap();
@@ -824,6 +941,7 @@ scale: 2
             validate: false,
             sheet: false,
             padding: None,
+            watch: false,
         };
 
         let target = resolve_target(&args).unwrap();
@@ -841,6 +959,7 @@ scale: 2
             validate: false,
             sheet: false,
             padding: None,
+            watch: false,
         };
 
         let result = resolve_target(&args);
@@ -875,6 +994,7 @@ padding: 2
             validate: false,
             sheet: false,
             padding: None,
+            watch: false,
         };
 
         let target = resolve_target(&args).unwrap().unwrap();
@@ -913,6 +1033,7 @@ name: target-test
             validate: false,
             sheet: false,
             padding: None,
+            watch: false,
         };
 
         run(args).unwrap();
@@ -967,6 +1088,7 @@ name: override-target
             validate: false,
             sheet: false,
             padding: None,
+            watch: false,
         };
 
         run(args).unwrap();
@@ -1007,6 +1129,7 @@ name: wall
             validate: false,
             sheet: false,
             padding: None,
+            watch: false,
         };
 
         run(args).unwrap();
@@ -1027,6 +1150,7 @@ name: wall
             validate: false,
             sheet: false,
             padding: None,
+            watch: false,
         };
 
         // files is empty, so discover(".") would be called
@@ -1057,6 +1181,7 @@ name: wall
             validate: false,
             sheet: false,
             padding: None,
+            watch: false,
         };
 
         run(args).unwrap();
@@ -1095,6 +1220,7 @@ name: wall
             validate: false,
             sheet: false,
             padding: None,
+            watch: false,
         };
 
         run(args).unwrap();

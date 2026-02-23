@@ -2,6 +2,7 @@
 name: test
 format: png
 ---
-scale: 16
+
+scale: 4
 sheet: auto
 metadata: true

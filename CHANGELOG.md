@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.19.2] - 2026-02-22
+
+### Added
+
+- Tetris example project (`examples/tetris/`)
+  - Palette with 38 colour definitions using `lighten()` and `darken()` expressions for 4-tone beveled shading per piece
+  - 7 beveled 8x8 block sprites (I/O/T/S/Z/J/L) with specular highlight, light edge, fill, and dark shadow
+  - Wall, empty cell, and transparent UI shapes
+  - 7 tetromino prefabs composed from individual block sprites
+  - Full 10x20 playfield map showing a mid-game state with stacked pieces and a T-piece in mid-drop
+  - Shader binding the tetris palette
+  - README documenting build commands and multi-colour/bevel techniques
+
+## [0.19.1] - 2026-02-16
+
+### Added
+
+- Integration test suite (`tests/pipeline.rs`, `tests/validation_integration.rs`)
+  - 16 pipeline tests: discovery, shape rendering, PNG dimensions, JSON metadata, prefab composition, map rendering, sheet packing, shader+palette integration
+  - 8 validation tests: clean fixtures, missing refs (shape/prefab/map), unused legends, empty grids, mixed error+warning counts, `--validate` flag
+- Test fixture project (`tests/fixtures/`) with minimal self-contained assets
+  - `test.palette.md` - 6 colours with edge/fill aliases
+  - `test.shader.md` - Palette binding
+  - `sprites.shape.md` - 3 shapes (block, frame, dot)
+  - `row.prefab.md` - Shape composition
+  - `room.map.md` - 3x3 map layout
+
 ## [0.19.0] - 2026-02-10
 
 ### Added

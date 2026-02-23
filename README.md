@@ -24,7 +24,7 @@ The same shape can be rendered with different palettes, at different scales, for
 
 ## Status
 
-**Phase 2.9 complete** - Cargo-style coloured CLI output.
+**Phase 2.9.2 complete** - Tetris example with colour expressions and beveled sprites.
 
 `px build` now discovers assets automatically:
 
