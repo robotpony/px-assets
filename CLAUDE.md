@@ -8,7 +8,7 @@ A Rust CLI tool that transforms markdown-style definition files into sprites and
 - **Palettes** (`.palette.md`) - Named colours and variants
 - **Brushes** (`.brush.md`) - Fill patterns
 - **Stamps** (`.stamp.md`) - Character-to-pixel mappings
-- **Styles** (`.style.md`) - Binds palette + stamps
+- **Shaders** (`.shader.md`) - Palette binding + effects
 - **Shapes** (`.shape.md`) - Drawable ASCII compositions
 - **Prefabs** (`.prefab.md`) - Shape compositions
 - **Maps** (`.map.md`) - Level layouts
@@ -36,17 +36,11 @@ cargo test               # Run tests
 cargo run -- [args]      # Run with arguments
 ```
 
-## Implementation Phases
-
-See SPEC.md for detailed implementation order:
-1. Core Pipeline (parser, palette, stamp, style, shape rendering, PNG output)
-2. Composition (prefab, map, sprite sheets, JSON metadata)
-3. Variants & Targets (palette variants, style inheritance, target profiles)
-4. Polish (watch mode, preview server, validation)
-
 ## Code Style
 
 - Prefer explicit error handling with `Result` types
 - Use descriptive variable names matching the domain (stamp, glyph, palette, etc.)
 - Keep parsing separate from rendering logic
 - Write tests for each file type parser
+
+See SPEC.md for the DSL specification and PLAN.md for implementation status.

@@ -236,7 +236,7 @@ Phased approach from core parsing to full toolchain.
 - [ ] Implement `px list`
 - [ ] Add shell completions (clap_complete)
 - [ ] Add `--verbose` and `--quiet` modes
-- [ ] Add colour output (terminal colours)
+- [x] Add colour output (terminal colours)
 
 ### 5.2 Advanced Validation
 
@@ -256,7 +256,7 @@ Phased approach from core parsing to full toolchain.
 
 - [ ] Snapshot tests for rendered output
 - [ ] Unit tests for parsers
-- [ ] Integration tests for full pipeline
+- [x] Integration tests for full pipeline
 - [ ] Performance benchmarks
 
 **Deliverable**: Production-ready CLI tool.

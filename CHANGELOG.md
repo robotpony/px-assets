@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.20.1] - 2026-02-23
+
+### Added
+
+- CT-91 (CINOTRIS) example project (`examples/ct-91/`)
+  - 16-colour CGA palette extracted via `px palette` from reference sprite sheets
+  - 8 diamond gem sprites in distinct colours with highlight/body/shadow shading
+  - 44 font glyphs (digits 0-9, symbols, uppercase A-Z, punctuation) with 3-colour vertical gradient
+  - 9 tile variants: bordered, solid, diagonal-stripe, inset, and small 8x8 tiles
+  - CINOTRIS title letters in green, yellow, and red colour variants
+  - 3 title prefabs composing individual letter shapes into title rows
+  - 4 UI label shapes (MM, A, D, X)
+  - README documenting sprite inventory, build commands, and px features demonstrated
+
 ## [0.20.0] - 2026-02-23
 
 ### Added
