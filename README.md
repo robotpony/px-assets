@@ -24,7 +24,7 @@ The same shape can be rendered with different palettes, at different scales, for
 
 ## Status
 
-**Phase 2.9.2 complete** - Tetris example with colour expressions and beveled sprites.
+**Phase 2.9.2 complete** - Tetris example with colour expressions and beveled sprites. `px palette` extracts colours from reference PNGs.
 
 `px build` now discovers assets automatically:
 
@@ -46,6 +46,19 @@ px build shapes/*.shape.md prefabs/*.prefab.md -o dist
 px init              # Scan current directory
 px init my-project/  # Scan a specific directory
 px init --force      # Overwrite existing px.yaml
+```
+
+`px palette` extracts colours from a PNG file and outputs a `.palette.md`-ready colour list:
+
+```bash
+# Extract all unique colours from a PNG
+px palette examples/pac-man/sheet.png
+
+# Limit to the 16 most frequent colours
+px palette examples/pac-man/sheet.png --max 16
+
+# Pipe directly into a palette file
+px palette ref.png --max 8 > my-game.palette.md
 ```
 
 `px validate` checks assets for missing references, unused legends, mismatched stamp sizes, and more:

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.20.0] - 2026-02-23
+
+### Added
+
+- `px palette` command for extracting colour palettes from PNG files
+  - Reads a PNG, counts unique non-transparent colours, outputs `.palette.md`-ready `$colour-N: #RRGGBB` lines to stdout
+  - Colours sorted by frequency (most common first)
+  - `--max N` option to limit output to the N most frequent colours
+  - Status output to stderr (supports piping: `px palette ref.png --max 8 > my.palette.md`)
+
 ## [0.19.2] - 2026-02-22
 
 ### Added

@@ -1,5 +1,6 @@
 pub mod build;
 pub mod init;
+pub mod palette;
 pub mod validate;
 
 use clap::{Parser, Subcommand};
@@ -20,6 +21,9 @@ pub enum Commands {
 
     /// Initialize a px project (generates px.yaml)
     Init(init::InitArgs),
+
+    /// Extract a colour palette from a PNG file
+    Palette(palette::PaletteArgs),
 
     /// Validate definition files without rendering
     Validate(validate::ValidateArgs),

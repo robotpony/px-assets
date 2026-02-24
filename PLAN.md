@@ -232,6 +232,7 @@ Phased approach from core parsing to full toolchain.
 ### 5.1 CLI Enhancements
 
 - [x] Implement `px init`
+- [x] Implement `px palette` (extract colours from PNG → `.palette.md` format)
 - [ ] Implement `px list`
 - [ ] Add shell completions (clap_complete)
 - [ ] Add `--verbose` and `--quiet` modes
