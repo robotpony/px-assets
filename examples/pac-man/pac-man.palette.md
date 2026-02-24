@@ -14,6 +14,9 @@ $orange: #FFB852
 $dark-blue: #2121DE
 $cream: #FFCC99
 $green: #00FF00
+$dark-green: #00B800
+$peach: #FFB897
+$brown: #7B5233
 
 $edge: $dark-blue
 $fill: $black
