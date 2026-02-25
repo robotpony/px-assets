@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.22.0] - 2026-02-24
+
+### Added
+
+- PICO-8 output target (`--target p8`) — Phase 3.1
+  - Colour quantization to the standard PICO-8 16-colour palette using weighted RGB distance
+  - Ordered dithering (Bayer 4x4 threshold matrix), the default for P8 output
+  - Floyd-Steinberg error diffusion dithering
+  - `--dither` CLI flag to choose dithering method (`none`, `ordered`, `floyd-steinberg`)
+  - Writes `.p8` cartridge files with `__gfx__` sprite data (128x128 pixels)
+  - Transparent pixels map to palette index 0 (black) by default
+  - Overflow handling: warns about sprites that exceed the 128x128 sheet bounds
+  - `p8` builtin target with fixed 128x128 sheet, scale 1, zero padding, indexed palette mode
+  - Validation now accepts `p8` as a supported output format
+
 ## [0.21.1] - 2026-02-24
 
 ### Added

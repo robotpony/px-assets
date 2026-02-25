@@ -159,12 +159,12 @@ Phased approach from core parsing to full toolchain.
 
 ### 3.1 PICO-8 Output
 
-- [ ] Implement colour quantization (16 colours)
-- [ ] Implement ordered dithering
-- [ ] Implement Floyd-Steinberg dithering
-- [ ] Generate P8 sprite data format
-- [ ] Write .p8 file
-- [ ] Map to PICO-8 standard palette
+- [x] Implement colour quantization (16 colours)
+- [x] Implement ordered dithering
+- [x] Implement Floyd-Steinberg dithering
+- [x] Generate P8 sprite data format
+- [x] Write .p8 file
+- [x] Map to PICO-8 standard palette
 
 ### 3.2 Aseprite Output
 

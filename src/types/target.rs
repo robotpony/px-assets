@@ -125,18 +125,32 @@ impl BuiltinTargets {
         }
     }
 
+    /// Get the "p8" target: PICO-8 cartridge, fixed 128x128 sheet.
+    fn p8() -> Target {
+        Target {
+            name: "p8".to_string(),
+            format: "p8".to_string(),
+            scale: Some(1),
+            sheet: SheetConfig::Fixed { width: 128, height: 128 },
+            padding: Some(0),
+            palette_mode: PaletteMode::Indexed,
+            shader: None,
+        }
+    }
+
     /// Get a builtin target by name.
     pub fn get(name: &str) -> Option<Target> {
         match name {
             "web" => Some(Self::web()),
             "sheet" => Some(Self::sheet()),
+            "p8" => Some(Self::p8()),
             _ => None,
         }
     }
 
     /// Get all builtin targets.
     pub fn all() -> Vec<Target> {
-        vec![Self::web(), Self::sheet()]
+        vec![Self::web(), Self::sheet(), Self::p8()]
     }
 }
 
@@ -279,8 +293,19 @@ mod tests {
     }
 
     #[test]
+    fn test_builtin_p8() {
+        let target = BuiltinTargets::get("p8").unwrap();
+        assert_eq!(target.name, "p8");
+        assert_eq!(target.format, "p8");
+        assert_eq!(target.scale, Some(1));
+        assert_eq!(target.sheet, SheetConfig::Fixed { width: 128, height: 128 });
+        assert_eq!(target.padding, Some(0));
+        assert_eq!(target.palette_mode, PaletteMode::Indexed);
+    }
+
+    #[test]
     fn test_builtin_unknown() {
-        assert!(BuiltinTargets::get("pico8").is_none());
+        assert!(BuiltinTargets::get("aseprite").is_none());
     }
 
     #[test]

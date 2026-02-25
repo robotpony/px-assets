@@ -15,7 +15,7 @@ use crate::error::{PxError, Result};
 use crate::output::{display_path, plural, Printer};
 use crate::parser::{parse_map_file, parse_prefab_file, parse_shape_file, parse_shader_file, parse_target_file};
 use crate::registry::AssetRegistry;
-use crate::render::{write_png, write_sheet_json, MapRenderer, PrefabRenderer, RenderedShape, ShapeRenderer, SheetPacker};
+use crate::render::{sprites_that_fit, write_p8, write_png, write_sheet_json, DitherMethod, MapRenderer, P8Config, PrefabRenderer, RenderedShape, ShapeRenderer, SheetPacker};
 use crate::types::{BuiltinBrushes, BuiltinShaders, BuiltinStamps, BuiltinTargets, Palette, Shader, ShapeMetadata, SheetConfig, Target};
 use crate::validation::{print_diagnostics, validate_registry};
 
@@ -52,6 +52,10 @@ pub struct BuildArgs {
     /// Padding between sprites in sheet (pixels)
     #[arg(long)]
     pub padding: Option<u32>,
+
+    /// Dithering method for indexed output (none, ordered, floyd-steinberg)
+    #[arg(long, value_parser = ["none", "ordered", "floyd-steinberg"])]
+    pub dither: Option<String>,
 
     /// Watch for changes and rebuild automatically
     #[arg(long)]
@@ -231,6 +235,12 @@ fn build_once(args: &BuildArgs, printer: &Printer) -> Result<()> {
 
     let out_display = display_path(&output);
 
+    // Determine effective format
+    let effective_format = target
+        .as_ref()
+        .map(|t| t.format.as_str())
+        .unwrap_or("png");
+
     // Sheet packing mode: combine all sprites into one sheet
     if use_sheet {
         let mut all_sprites: Vec<RenderedShape> = Vec::new();
@@ -240,28 +250,68 @@ fn build_once(args: &BuildArgs, printer: &Printer) -> Result<()> {
         let packer = SheetPacker::new(effective_padding);
         let (sheet, mut meta) = packer.pack(&all_sprites);
 
-        let png_path = output.join("sheet.png");
-        let json_path = output.join("sheet.json");
-
-        let sheet_scale = effective_scale.unwrap_or(1);
-        meta.scale = sheet_scale;
-        write_png(&sheet, &png_path, sheet_scale)?;
-        write_sheet_json(&meta, &json_path)?;
-
         let total = total_shapes + total_prefabs;
-        let (sw, sh) = (sheet.width(), sheet.height());
-        printer.status(
-            "Packing",
-            &format!(
-                "{} into sheet {}",
-                plural(total, "sprite", "sprites"),
-                printer.dim(&format!("({}x{})", sw * sheet_scale as usize, sh * sheet_scale as usize)),
-            ),
-        );
-        printer.success(
-            "Finished",
-            &format!("sheet.png + sheet.json -> {}", out_display),
-        );
+
+        if effective_format == "p8" {
+            // PICO-8 output
+            let (_, truncated) = sprites_that_fit(&meta.frames, 128, 128);
+            for frame in &truncated {
+                printer.warning(
+                    "Truncated",
+                    &format!("'{}' exceeds 128x128 sprite sheet bounds", frame.name),
+                );
+            }
+
+            let dither = args
+                .dither
+                .as_deref()
+                .map(DitherMethod::from_str_lossy)
+                .unwrap_or(DitherMethod::Ordered);
+
+            let p8_config = P8Config {
+                dither,
+                transparent_index: 0,
+            };
+
+            let p8_path = output.join("sprite.p8");
+            write_p8(&sheet, &p8_path, &p8_config)?;
+
+            printer.status(
+                "Packing",
+                &format!(
+                    "{} into P8 sheet {}",
+                    plural(total, "sprite", "sprites"),
+                    printer.dim(&format!("(128x128, dither: {})", dither)),
+                ),
+            );
+            printer.success(
+                "Finished",
+                &format!("sprite.p8 -> {}", out_display),
+            );
+        } else {
+            // PNG output (default)
+            let png_path = output.join("sheet.png");
+            let json_path = output.join("sheet.json");
+
+            let sheet_scale = effective_scale.unwrap_or(1);
+            meta.scale = sheet_scale;
+            write_png(&sheet, &png_path, sheet_scale)?;
+            write_sheet_json(&meta, &json_path)?;
+
+            let (sw, sh) = (sheet.width(), sheet.height());
+            printer.status(
+                "Packing",
+                &format!(
+                    "{} into sheet {}",
+                    plural(total, "sprite", "sprites"),
+                    printer.dim(&format!("({}x{})", sw * sheet_scale as usize, sh * sheet_scale as usize)),
+                ),
+            );
+            printer.success(
+                "Finished",
+                &format!("sheet.png + sheet.json -> {}", out_display),
+            );
+        }
     } else {
         let total = total_shapes + total_prefabs + total_maps;
         printer.success(
@@ -585,7 +635,7 @@ fn resolve_target(args: &BuildArgs) -> Result<Option<Target>> {
 
     Err(PxError::Build {
         message: format!("Target not found: {}", target_name),
-        help: Some("Use 'web' or 'sheet' for builtin targets, or provide a .target.md file path".to_string()),
+        help: Some("Use 'web', 'sheet', or 'p8' for builtin targets, or provide a .target.md file path".to_string()),
     })
 }
 
@@ -701,6 +751,7 @@ name: test-square
             validate: false,
             sheet: false,
             padding: None,
+            dither: None,
             watch: false,
         };
 
@@ -745,6 +796,7 @@ name: scaled-shape
             validate: false,
             sheet: false,
             padding: None,
+            dither: None,
             watch: false,
         };
 
@@ -794,6 +846,7 @@ name: shape-b
             validate: false,
             sheet: false,
             padding: None,
+            dither: None,
             watch: false,
         };
 
@@ -835,6 +888,7 @@ scale: 2
             validate: false,
             sheet: false,
             padding: None,
+            dither: None,
             watch: false,
         };
 
@@ -880,6 +934,7 @@ scale: 2
             validate: false,
             sheet: false,
             padding: None,
+            dither: None,
             watch: false,
         };
 
@@ -904,6 +959,7 @@ scale: 2
             validate: false,
             sheet: false,
             padding: None,
+            dither: None,
             watch: false,
         };
 
@@ -924,6 +980,7 @@ scale: 2
             validate: false,
             sheet: false,
             padding: None,
+            dither: None,
             watch: false,
         };
 
@@ -943,6 +1000,7 @@ scale: 2
             validate: false,
             sheet: false,
             padding: None,
+            dither: None,
             watch: false,
         };
 
@@ -961,6 +1019,7 @@ scale: 2
             validate: false,
             sheet: false,
             padding: None,
+            dither: None,
             watch: false,
         };
 
@@ -996,6 +1055,7 @@ padding: 2
             validate: false,
             sheet: false,
             padding: None,
+            dither: None,
             watch: false,
         };
 
@@ -1035,6 +1095,7 @@ name: target-test
             validate: false,
             sheet: false,
             padding: None,
+            dither: None,
             watch: false,
         };
 
@@ -1090,6 +1151,7 @@ name: override-target
             validate: false,
             sheet: false,
             padding: None,
+            dither: None,
             watch: false,
         };
 
@@ -1131,6 +1193,7 @@ name: wall
             validate: false,
             sheet: false,
             padding: None,
+            dither: None,
             watch: false,
         };
 
@@ -1152,6 +1215,7 @@ name: wall
             validate: false,
             sheet: false,
             padding: None,
+            dither: None,
             watch: false,
         };
 
@@ -1183,6 +1247,7 @@ name: wall
             validate: false,
             sheet: false,
             padding: None,
+            dither: None,
             watch: false,
         };
 
@@ -1222,6 +1287,7 @@ name: wall
             validate: false,
             sheet: false,
             padding: None,
+            dither: None,
             watch: false,
         };
 

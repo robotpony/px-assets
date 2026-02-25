@@ -57,6 +57,8 @@ px build examples/pac-man/ --scale 4  # Build from a project directory
 px build shapes/*.shape.md -o dist    # Build specific files
 px build --sheet --padding 2 -o dist  # Pack into a sprite sheet
 px build --target=web -o dist         # Use a named target profile
+px build --target=p8 -o dist          # Output PICO-8 cartridge (.p8)
+px build --target=p8 --dither=none    # P8 without dithering
 ```
 
 **`px init`** generates a `px.yaml` manifest from discovered assets.
@@ -103,7 +105,8 @@ px completions bash            # Generate bash completions
 - **Prefabs** for compositing shapes into larger images (nested prefab support)
 - **Maps** for level layouts with JSON metadata export (instance positions, grid info)
 - **Sprite sheet** packing with `--sheet` (shelf algorithm, TexturePacker-compatible JSON)
-- **Target profiles** for bundling output settings (`--target=web`, `--target=sheet`, or custom `.target.md` files)
+- **Target profiles** for bundling output settings (`--target=web`, `--target=sheet`, `--target=p8`, or custom `.target.md` files)
+- **PICO-8 output** (`--target=p8`) with 16-colour palette quantization, ordered/Floyd-Steinberg dithering, and `.p8` cartridge export
 - PNG output with integer scaling
 - Global `-v` (verbose) and `-q` (quiet) output modes
 - Shell completions for bash, zsh, fish, elvish, powershell

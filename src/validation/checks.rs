@@ -425,7 +425,7 @@ pub fn check_target_format(registry: &AssetRegistry) -> ValidationResult {
     let mut result = ValidationResult::new();
 
     for target in registry.targets() {
-        if target.format != "png" {
+        if target.format != "png" && target.format != "p8" {
             result.push(
                 Diagnostic::warning(
                     "px::validate::unsupported-target-format",
@@ -434,7 +434,7 @@ pub fn check_target_format(registry: &AssetRegistry) -> ValidationResult {
                         target.name, target.format
                     ),
                 )
-                .with_help("Only 'png' format is currently supported"),
+                .with_help("Supported formats: 'png', 'p8'"),
             );
         }
     }
@@ -916,9 +916,19 @@ mod tests {
     }
 
     #[test]
-    fn test_check_target_format_unsupported() {
+    fn test_check_target_format_p8_ok() {
         let mut builder = RegistryBuilder::new();
         builder.add_target(Target::new("pico", "p8"));
+        let registry = build_registry(builder);
+
+        let result = check_target_format(&registry);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_check_target_format_unsupported() {
+        let mut builder = RegistryBuilder::new();
+        builder.add_target(Target::new("bmp-out", "bmp"));
         let registry = build_registry(builder);
 
         let result = check_target_format(&registry);
