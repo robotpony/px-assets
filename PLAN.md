@@ -285,13 +285,13 @@ Phased approach from core parsing to full toolchain.
 
 ### 6.3 Grid Auto-Detection
 
-- [ ] Scan all rows: mark rows where every pixel is identical (or all transparent)
-- [ ] Scan all columns: same logic
-- [ ] Collapse adjacent separator rows/columns (multi-pixel separators)
-- [ ] Find most common spacing → derive cell dimensions
-- [ ] Support `--separator` colour override (default: transparent or auto)
-- [ ] Fallback: if no grid found, treat image as single sprite
-- [ ] Report detected grid dimensions to stderr
+- [x] Scan all rows: mark rows where every pixel is identical (or all transparent)
+- [x] Scan all columns: same logic
+- [x] Collapse adjacent separator rows/columns (multi-pixel separators)
+- [x] Find most common spacing → derive cell dimensions
+- [x] Support `--separator` colour override (default: transparent or auto)
+- [x] Fallback: if no grid found, treat image as single sprite
+- [x] Report detected grid dimensions to stderr
 
 ### 6.4 Palette Extraction
 

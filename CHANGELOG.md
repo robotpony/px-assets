@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.23.2] - 2026-02-24
+
+### Added
+
+- Grid auto-detection for `px slice` (Phase 6.3)
+  - When no `--cell` is given, scans for uniform separator rows/columns to detect grid structure
+  - Collapses multi-pixel separators into bands, extracts content ranges from gaps
+  - Derives cell dimensions from most common spacing
+  - `--separator #hex` overrides auto-detected separator colour
+  - Falls back to single-sprite mode when no grid is detected
+  - Reports detected grid dimensions and separator colour via status output
+
 ## [0.23.1] - 2026-02-24
 
 ### Added
