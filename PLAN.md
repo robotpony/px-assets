@@ -277,11 +277,11 @@ Phased approach from core parsing to full toolchain.
 
 ### 6.2 Grid Slicing (Explicit)
 
-- [ ] Parse `--cell WxH` argument (e.g., `16x16`)
-- [ ] Split image into uniform cells, producing `Vec<SlicedCell>`
-- [ ] Name cells as `{name}-{row}-{col}` (zero-indexed)
-- [ ] Handle edge cells that don't fill a complete cell (warn + include)
-- [ ] Skip fully transparent cells
+- [x] Parse `--cell WxH` argument (e.g., `16x16`)
+- [x] Split image into uniform cells, producing `Vec<SlicedCell>`
+- [x] Name cells as `{name}-{row}-{col}` (zero-indexed)
+- [x] Handle edge cells that don't fill a complete cell (warn + include)
+- [x] Skip fully transparent cells
 
 ### 6.3 Grid Auto-Detection
 

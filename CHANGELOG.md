@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.23.1] - 2026-02-24
+
+### Added
+
+- Grid slicing for `px slice` (Phase 6.2)
+  - `SlicedCell` struct holding extracted cell image, name, and grid position
+  - `slice_grid()` splits a spritesheet into uniform cells given `--cell WxH`
+  - Cells named `{base}-{row}-{col}` (zero-indexed)
+  - Partial edge cells included with a warning when image dimensions aren't evenly divisible
+  - Fully transparent cells skipped automatically
+  - Without `--cell`, the entire image is treated as a single cell
+  - `run()` now returns `Vec<SlicedCell>` for downstream pipeline use
+  - Cargo-style output: `Slicing`, `Finished` status lines with cell count and grid dimensions
+
 ## [0.23.0] - 2026-02-24
 
 ### Added

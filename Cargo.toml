@@ -1,6 +1,6 @@
 [package]
 name = "px"
-version = "0.23.0"
+version = "0.23.1"
 edition = "2021"
 description = "A CLI tool for generating sprites and sprite maps from text-based definitions"
 license = "MIT"

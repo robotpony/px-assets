@@ -13,7 +13,7 @@ fn main() -> Result<()> {
         Commands::Init(args) => px::cli::init::run(args, &printer)?,
         Commands::List(args) => px::cli::list::run(args, &printer)?,
         Commands::Palette(args) => px::cli::palette::run(args, &printer)?,
-        Commands::Slice(args) => px::cli::slice::run(args, &printer)?,
+        Commands::Slice(args) => { px::cli::slice::run(args, &printer)?; },
         Commands::Validate(args) => px::cli::validate::run(args, &printer)?,
     }
 
