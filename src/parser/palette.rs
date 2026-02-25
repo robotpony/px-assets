@@ -444,4 +444,39 @@ $dark: #000000
         let result = parse_palette(source);
         assert!(result.is_err());
     }
+
+    #[test]
+    fn test_parse_colour_line_empty_value() {
+        let result = parse_colour_line("$name:");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_colour_line_empty_name() {
+        let result = parse_colour_line("$: #fff");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_variant_header_missing_colon() {
+        assert_eq!(parse_variant_header("@light-mode"), None);
+    }
+
+    #[test]
+    fn test_parse_palette_with_comments() {
+        let source = r#"---
+name: test
+---
+// this is a comment
+$dark: #1a1a2e
+# this looks like a comment too
+$light: #4a4a68
+"#;
+
+        let builders = parse_palette(source).unwrap();
+        let palette = builders.into_iter().next().unwrap().build(None).unwrap();
+
+        assert_eq!(palette.get("dark"), Some(Colour::from_hex("#1a1a2e").unwrap()));
+        assert_eq!(palette.get("light"), Some(Colour::from_hex("#4a4a68").unwrap()));
+    }
 }

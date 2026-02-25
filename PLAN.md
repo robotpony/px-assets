@@ -254,10 +254,10 @@ Phased approach from core parsing to full toolchain.
 
 ### 5.4 Testing
 
-- [ ] Snapshot tests for rendered output
-- [ ] Unit tests for parsers
+- [x] Snapshot tests for rendered output
+- [x] Unit tests for parsers
 - [x] Integration tests for full pipeline
-- [ ] Performance benchmarks
+- [x] Performance benchmarks
 
 **Deliverable**: Production-ready CLI tool.
 
@@ -269,11 +269,11 @@ Phased approach from core parsing to full toolchain.
 
 ### 6.1 CLI Skeleton & PNG Loading
 
-- [ ] Add `px slice` subcommand with clap derive
-- [ ] Accept `<input>` path, `--cell`, `--output`, `--name`, `--stamps`, `--stamp-size`, `--separator`, `--palette`
-- [ ] Load PNG via `image::open`, convert to `RgbaImage`
-- [ ] Validate input (exists, is PNG, has nonzero dimensions)
-- [ ] Wire up Cargo-style terminal output (reuse `output.rs` printer)
+- [x] Add `px slice` subcommand with clap derive
+- [x] Accept `<input>` path, `--cell`, `--output`, `--name`, `--stamps`, `--stamp-size`, `--separator`, `--palette`
+- [x] Load PNG via `image::open`, convert to `RgbaImage`
+- [x] Validate input (exists, is PNG, has nonzero dimensions)
+- [x] Wire up Cargo-style terminal output (reuse `output.rs` printer)
 
 ### 6.2 Grid Slicing (Explicit)
 

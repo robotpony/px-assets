@@ -151,4 +151,23 @@ mod tests {
 
         assert_eq!(result.content.value, "+--+\n|..|\n+--+");
     }
+
+    #[test]
+    fn test_extract_body_non_px_fence() {
+        let source = "```javascript\nconsole.log('hi')\n```";
+
+        let result = extract_body(source, 0);
+
+        // Non-px code fence should not be captured
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_extract_body_no_trailing_newline() {
+        let source = "```px\nAB\n```";
+
+        let result = extract_body(source, 0).unwrap();
+
+        assert_eq!(result.content.value, "AB");
+    }
 }

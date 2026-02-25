@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.23.0] - 2026-02-24
+
+### Added
+
+- `px slice` subcommand skeleton for importing PNGs into px definition files (Phase 6.1)
+  - Accepts `<input>` PNG path with `--cell`, `--output`, `--name`, `--stamps`, `--stamp-size`, `--separator`, `--palette` arguments
+  - Loads PNG via `image::open`, converts to `RgbaImage`, validates dimensions
+  - Input validation: checks file exists, warns on non-`.png` extension
+  - `parse_dimensions()` helper for `WxH` format strings (used by `--cell` and `--stamp-size`)
+  - Cargo-style terminal output: `Loading`, `Analyzed` status lines
+  - No slicing logic yet; this is the CLI skeleton for Phase 6
+
+## [0.22.1] - 2026-02-24
+
+### Added
+
+- Expanded snapshot tests for pipeline output — Phase 5.4
+  - Binary snapshot for prefab PNG (`row.png`)
+  - Binary snapshot for map PNG (`room.png`)
+  - Text snapshot for PICO-8 cartridge output (`.p8` file content)
+- 19 parser edge-case tests covering untested error paths and boundary conditions
+  - Palette: empty value, empty name, missing colon on variant header, comment handling
+  - Stamp: multi-character glyph, all-transparent grid, empty body
+  - Shape: invalid scale, whitespace-only grid, YAML sequence tags
+  - Brush: lowercase tokens, empty code block
+  - Document: frontmatter-only, preamble before frontmatter, multiple code blocks
+  - Body: non-px code fence, no trailing newline
+  - Legend: unclosed quote, empty braces
+- Criterion benchmark suite (`benches/pipeline.rs`) with 10 benchmarks in 4 groups
+  - Parsing: single shape, multi-shape file, palette
+  - Rendering: 4x4 shape, 16x16 shape
+  - Packing: 3-sprite sheet, 12-sprite sheet
+  - Quantization: direct, ordered dithering, Floyd-Steinberg dithering (128x128)
+
+### Changed
+
+- Phase 5.4 (Testing) marked complete
+- `quantize_sheet` now exported from public API for benchmark access
+
 ## [0.22.0] - 2026-02-24
 
 ### Added

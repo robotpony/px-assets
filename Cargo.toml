@@ -1,6 +1,6 @@
 [package]
 name = "px"
-version = "0.22.0"
+version = "0.23.0"
 edition = "2021"
 description = "A CLI tool for generating sprites and sprite maps from text-based definitions"
 license = "MIT"
@@ -23,6 +23,11 @@ notify = "7"
 walkdir = "2"
 
 [dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
 insta = { version = "1", features = ["json"] }
 pretty_assertions = "1"
 tempfile = "3"
+
+[[bench]]
+name = "pipeline"
+harness = false

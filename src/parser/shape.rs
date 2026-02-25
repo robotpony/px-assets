@@ -350,4 +350,42 @@ name: no-scale
 
         assert_eq!(shape.scale, None);
     }
+
+    #[test]
+    fn test_parse_shape_invalid_scale() {
+        let source = r#"---
+name: test
+scale: abc
+---
+
+```px
+#
+```
+"#;
+
+        let shapes = parse_shape_file(source).unwrap();
+        // Invalid scale (string, not u64) results in None
+        assert_eq!(shapes[0].scale, None);
+    }
+
+    #[test]
+    fn test_parse_shape_whitespace_grid() {
+        let source = "---\nname: test\n---\n\n```px\n   \n   \n```\n";
+
+        let shapes = parse_shape_file(source).unwrap();
+        let shape = &shapes[0];
+
+        // Grid of spaces preserves dimensions
+        assert_eq!(shape.width(), 3);
+        assert_eq!(shape.height(), 2);
+        assert_eq!(shape.get(0, 0), Some(' '));
+    }
+
+    #[test]
+    fn test_parse_shape_tags_as_sequence() {
+        let source = "---\nname: test\ntags:\n  - player\n  - solid\n---\n\n```px\n#\n```\n";
+
+        let shapes = parse_shape_file(source).unwrap();
+        assert_eq!(shapes[0].tags, vec!["player", "solid"]);
+    }
 }

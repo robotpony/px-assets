@@ -3,6 +3,7 @@ pub mod completions;
 pub mod init;
 pub mod list;
 pub mod palette;
+pub mod slice;
 pub mod validate;
 
 use clap::{Parser, Subcommand};
@@ -55,6 +56,9 @@ pub enum Commands {
 
     /// Extract a colour palette from a PNG file
     Palette(palette::PaletteArgs),
+
+    /// Slice a PNG into sprite definition files
+    Slice(slice::SliceArgs),
 
     /// Validate definition files without rendering
     Validate(validate::ValidateArgs),

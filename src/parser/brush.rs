@@ -287,4 +287,36 @@ BA
         assert_eq!(checker.name, "checker");
         assert_eq!(checker.size(), (2, 2));
     }
+
+    #[test]
+    fn test_parse_brush_lowercase_tokens() {
+        let source = r#"---
+name: lower
+---
+
+```px
+ab
+ba
+```
+"#;
+
+        let brushes = parse_brush_file(source).unwrap();
+        let brush = &brushes[0];
+
+        // Lowercase tokens are preserved as-is
+        assert_eq!(brush.size(), (2, 2));
+        assert_eq!(brush.get(0, 0), Some('a'));
+        assert_eq!(brush.get(1, 0), Some('b'));
+        assert_eq!(brush.get(0, 1), Some('b'));
+        assert_eq!(brush.get(1, 1), Some('a'));
+    }
+
+    #[test]
+    fn test_parse_brush_empty_code_block() {
+        let source = "---\nname: empty\n---\n\n```px\n```\n";
+
+        // Empty code block → empty body string → no pattern → error
+        let result = parse_brush_file(source);
+        assert!(result.is_err());
+    }
 }

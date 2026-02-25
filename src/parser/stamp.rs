@@ -315,4 +315,37 @@ $
         assert_eq!(edge_h.name, "edge-h");
         assert_eq!(edge_h.glyph, Some('-'));
     }
+
+    #[test]
+    fn test_parse_glyph_multi_character() {
+        let source = r#"---
+name: test
+glyph: abc
+---
+
+```px
+$
+```
+"#;
+
+        let stamps = parse_stamp_file(source).unwrap();
+        // Multi-char glyph takes first character only
+        assert_eq!(stamps[0].glyph, Some('a'));
+    }
+
+    #[test]
+    fn test_parse_pixel_grid_all_transparent() {
+        let grid = parse_pixel_grid("xxx\nxxx\nxxx").unwrap();
+        // All-transparent rows get trimmed, leaving an empty grid
+        assert!(grid.is_empty());
+    }
+
+    #[test]
+    fn test_parse_stamp_with_empty_body() {
+        let source = "---\nname: empty\nglyph: E\n---\n\n```px\n   \n```\n";
+
+        // Body with only whitespace produces empty pixel grid → error
+        let result = parse_stamp_file(source);
+        assert!(result.is_err());
+    }
 }

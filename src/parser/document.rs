@@ -345,4 +345,37 @@ tags: #platform #solid
 
         assert_eq!(tags, vec!["player", "solid"]);
     }
+
+    #[test]
+    fn test_parse_document_frontmatter_only() {
+        let source = "---\nname: test\n---\n";
+
+        let docs = parse_documents(source).unwrap();
+
+        assert_eq!(docs.len(), 1);
+        assert_eq!(docs[0].name.value, "test");
+        assert!(docs[0].body.is_none());
+        assert!(docs[0].legend.is_none());
+    }
+
+    #[test]
+    fn test_parse_document_preamble_before_frontmatter() {
+        let source = "some preamble text\n---\nname: test\n---\n\n```px\n#\n```\n";
+
+        // Preamble text before frontmatter is treated as a section
+        // that lacks --- delimiter, causing a parse error
+        let result = parse_documents(source);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_document_multiple_code_blocks() {
+        // Only the first ```px block should be captured as body
+        let source = "---\nname: test\n---\n\n```px\nAA\n```\n\n```px\nBB\n```\n";
+
+        let docs = parse_documents(source).unwrap();
+
+        assert_eq!(docs.len(), 1);
+        assert_eq!(docs[0].body.as_ref().unwrap().value, "AA");
+    }
 }

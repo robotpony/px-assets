@@ -358,4 +358,19 @@ mod tests {
 
         assert!(result.is_none());
     }
+
+    #[test]
+    fn test_parse_legend_line_unclosed_quote() {
+        let result = parse_legend_line("\"x: brick");
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_complex_legend_value_empty_braces() {
+        let result = parse_complex_legend_value("{}");
+
+        // Empty braces have no stamp/fill key → error
+        assert!(result.is_err());
+    }
 }

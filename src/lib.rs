@@ -17,7 +17,7 @@ pub use discovery::{discover, discover_paths, DiscoveryResult, LoadOptions, Mani
 pub use output::{Printer, Verbosity};
 pub use error::{PxError, Result};
 pub use registry::{AssetId, AssetKind, AssetRegistry, RegistryBuilder};
-pub use render::{scale_pixels, write_png, write_sheet_json, MapRenderer, PrefabRenderer, RenderedShape, ShapeRenderer, SheetMeta, SheetPacker};
+pub use render::{quantize_sheet, scale_pixels, write_png, write_sheet_json, MapRenderer, PrefabRenderer, RenderedShape, ShapeRenderer, SheetMeta, SheetPacker};
 pub use types::{
     Brush, BuiltinBrushes, BuiltinShaders, BuiltinStamps, BuiltinTargets, Colour, ColourExpr,
     Effect, EffectParam, ExprEvaluator, LegendEntry, Map, MapInstance, MapMetadata, Palette,
