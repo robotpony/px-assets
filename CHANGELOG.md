@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.21.1] - 2026-02-24
+
+### Added
+
+- Unit tests for all Phase 5.2 advanced validation checks (15 new tests)
+  - `check_unused_assets`: stamp used/unused, shape unreferenced, palette unreferenced/referenced-by-shader
+  - `check_shadowed_definitions`: no shadow, stamp shadows builtin, brush shadows builtin
+  - `check_unused_palette_colours`: edge/fill always used, unused colour, colour used in binding
+  - `check_palette_refs`: valid reference, missing reference
+  - `check_duplicate_names`: shape/prefab collision, no collision
+
+### Changed
+
+- Phase 5.2 (Advanced Validation) marked complete
+  - All four items were already implemented: unused assets, shadowed definitions, unused palette colours, and fix suggestions (`.with_help()` on all diagnostics)
+  - This release adds the missing test coverage to close out the phase
+
 ## [0.21.0] - 2026-02-24
 
 ### Added

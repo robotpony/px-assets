@@ -701,7 +701,7 @@ pub fn check_unused_palette_colours(registry: &AssetRegistry) -> ValidationResul
 mod tests {
     use super::*;
     use crate::registry::RegistryBuilder;
-    use crate::types::{Map, Prefab, Shape, Stamp, PixelToken, Target};
+    use crate::types::{Brush, Map, Palette, PaletteBuilder, Prefab, Shader, Shape, Stamp, PixelToken, Target};
     use std::collections::HashMap;
 
     fn build_registry(builder: RegistryBuilder) -> AssetRegistry {
@@ -923,5 +923,281 @@ mod tests {
 
         let result = check_target_format(&registry);
         assert!(result.has_warnings());
+    }
+
+    // -- check_unused_assets --
+
+    #[test]
+    fn test_check_unused_assets_stamp_used() {
+        let mut builder = RegistryBuilder::new();
+        builder.add_stamp(Stamp::single("brick", Some('B'), PixelToken::Edge));
+
+        let mut legend = HashMap::new();
+        legend.insert('B', LegendEntry::StampRef("brick".to_string()));
+        builder.add_shape(Shape::new("wall", vec![], vec![vec!['B']], legend));
+        let registry = build_registry(builder);
+
+        let result = check_unused_assets(&registry);
+        // brick is used in wall's legend, so no warning for it
+        let stamp_warnings: Vec<_> = result.iter()
+            .filter(|d| d.message.contains("Stamp 'brick'"))
+            .collect();
+        assert!(stamp_warnings.is_empty());
+    }
+
+    #[test]
+    fn test_check_unused_assets_stamp_unused() {
+        let mut builder = RegistryBuilder::new();
+        builder.add_stamp(Stamp::single("orphan", Some('O'), PixelToken::Edge));
+        // Shape that doesn't reference orphan
+        builder.add_shape(Shape::new("test", vec![], vec![vec!['#']], HashMap::new()));
+        let registry = build_registry(builder);
+
+        let result = check_unused_assets(&registry);
+        let stamp_warnings: Vec<_> = result.iter()
+            .filter(|d| d.message.contains("Stamp 'orphan'"))
+            .collect();
+        assert_eq!(stamp_warnings.len(), 1);
+    }
+
+    #[test]
+    fn test_check_unused_assets_shape_unreferenced() {
+        let mut builder = RegistryBuilder::new();
+        builder.add_shape(Shape::new("lonely", vec![], vec![vec!['#']], HashMap::new()));
+        // Add a map so the check activates (only warns when prefabs/maps exist)
+        let mut legend = HashMap::new();
+        legend.insert('.', "empty".to_string());
+        builder.add_map(Map::new("level", vec![], vec![vec!['.']], legend));
+        let registry = build_registry(builder);
+
+        let result = check_unused_assets(&registry);
+        let shape_warnings: Vec<_> = result.iter()
+            .filter(|d| d.message.contains("Shape 'lonely'"))
+            .collect();
+        assert_eq!(shape_warnings.len(), 1);
+    }
+
+    #[test]
+    fn test_check_unused_assets_palette_unreferenced() {
+        let mut pb = PaletteBuilder::new("orphan-palette");
+        pb.define("red", "#FF0000");
+        let palette = pb.build(None).unwrap();
+
+        let mut builder = RegistryBuilder::new();
+        builder.add_palette(palette);
+        let registry = build_registry(builder);
+
+        let result = check_unused_assets(&registry);
+        let palette_warnings: Vec<_> = result.iter()
+            .filter(|d| d.message.contains("Palette 'orphan-palette'"))
+            .collect();
+        assert_eq!(palette_warnings.len(), 1);
+    }
+
+    #[test]
+    fn test_check_unused_assets_palette_referenced_by_shader() {
+        let mut pb = PaletteBuilder::new("game");
+        pb.define("red", "#FF0000");
+        let palette = pb.build(None).unwrap();
+
+        let mut builder = RegistryBuilder::new();
+        builder.add_palette(palette);
+        builder.add_shader(Shader::new("main", "game"));
+        let registry = build_registry(builder);
+
+        let result = check_unused_assets(&registry);
+        let palette_warnings: Vec<_> = result.iter()
+            .filter(|d| d.message.contains("Palette 'game'"))
+            .collect();
+        assert!(palette_warnings.is_empty());
+    }
+
+    // -- check_shadowed_definitions --
+
+    #[test]
+    fn test_check_shadowed_definitions_no_shadow() {
+        let mut builder = RegistryBuilder::new();
+        // User stamp with a unique name (not a builtin name)
+        builder.add_stamp(Stamp::single("brick", Some('B'), PixelToken::Edge));
+        let registry = build_registry(builder);
+
+        let result = check_shadowed_definitions(&registry);
+        let shadow_warnings: Vec<_> = result.iter()
+            .filter(|d| d.code == "px::validate::shadowed-builtin")
+            .collect();
+        assert!(shadow_warnings.is_empty());
+    }
+
+    #[test]
+    fn test_check_shadowed_definitions_stamp_shadows_builtin() {
+        let mut builder = RegistryBuilder::new();
+        // "solid" is a builtin stamp name; override it with different pixels
+        builder.add_stamp(Stamp::new(
+            "solid",
+            Some('#'),
+            vec![vec![PixelToken::Fill]], // builtin solid uses Edge, this uses Fill
+        ));
+        let registry = build_registry(builder);
+
+        let result = check_shadowed_definitions(&registry);
+        let shadow_warnings: Vec<_> = result.iter()
+            .filter(|d| d.message.contains("Stamp 'solid' shadows"))
+            .collect();
+        assert_eq!(shadow_warnings.len(), 1);
+    }
+
+    #[test]
+    fn test_check_shadowed_definitions_brush_shadows_builtin() {
+        let mut builder = RegistryBuilder::new();
+        // "checker" is a builtin brush; override with a different pattern
+        builder.add_brush(Brush::new("checker", vec![vec!['A']]));
+        let registry = build_registry(builder);
+
+        let result = check_shadowed_definitions(&registry);
+        let shadow_warnings: Vec<_> = result.iter()
+            .filter(|d| d.message.contains("Brush 'checker' shadows"))
+            .collect();
+        assert_eq!(shadow_warnings.len(), 1);
+    }
+
+    // -- check_unused_palette_colours --
+
+    #[test]
+    fn test_check_unused_palette_colours_edge_fill_always_used() {
+        let mut pb = PaletteBuilder::new("game");
+        pb.define("edge", "#000000");
+        pb.define("fill", "#FFFFFF");
+        let palette = pb.build(None).unwrap();
+
+        let mut builder = RegistryBuilder::new();
+        builder.add_palette(palette);
+        let registry = build_registry(builder);
+
+        let result = check_unused_palette_colours(&registry);
+        // edge and fill are implicitly used by stamp tokens
+        let colour_warnings: Vec<_> = result.iter()
+            .filter(|d| d.code == "px::validate::unused-colour")
+            .collect();
+        assert!(colour_warnings.is_empty());
+    }
+
+    #[test]
+    fn test_check_unused_palette_colours_unused() {
+        let mut pb = PaletteBuilder::new("game");
+        pb.define("edge", "#000000");
+        pb.define("fill", "#FFFFFF");
+        pb.define("accent", "#FF0000");
+        let palette = pb.build(None).unwrap();
+
+        let mut builder = RegistryBuilder::new();
+        builder.add_palette(palette);
+        let registry = build_registry(builder);
+
+        let result = check_unused_palette_colours(&registry);
+        let colour_warnings: Vec<_> = result.iter()
+            .filter(|d| d.message.contains("'accent'"))
+            .collect();
+        assert_eq!(colour_warnings.len(), 1);
+    }
+
+    #[test]
+    fn test_check_unused_palette_colours_used_in_binding() {
+        let mut pb = PaletteBuilder::new("game");
+        pb.define("edge", "#000000");
+        pb.define("fill", "#FFFFFF");
+        pb.define("accent", "#FF0000");
+        let palette = pb.build(None).unwrap();
+
+        let mut bindings = HashMap::new();
+        bindings.insert('A', "$accent".to_string());
+        let mut legend = HashMap::new();
+        legend.insert('~', LegendEntry::Fill {
+            name: "checker".to_string(),
+            bindings,
+        });
+
+        let mut builder = RegistryBuilder::new();
+        builder.add_palette(palette);
+        builder.add_shape(Shape::new("test", vec![], vec![vec!['~']], legend));
+        let registry = build_registry(builder);
+
+        let result = check_unused_palette_colours(&registry);
+        let colour_warnings: Vec<_> = result.iter()
+            .filter(|d| d.message.contains("'accent'"))
+            .collect();
+        assert!(colour_warnings.is_empty());
+    }
+
+    // -- check_palette_refs --
+
+    #[test]
+    fn test_check_palette_refs_valid() {
+        let mut pb = PaletteBuilder::new("game");
+        pb.define("dark", "#222222");
+        let palette = pb.build(None).unwrap();
+
+        let mut bindings = HashMap::new();
+        bindings.insert('A', "$dark".to_string());
+        let mut legend = HashMap::new();
+        legend.insert('~', LegendEntry::Fill {
+            name: "checker".to_string(),
+            bindings,
+        });
+
+        let mut builder = RegistryBuilder::new();
+        builder.add_palette(palette);
+        builder.add_shape(Shape::new("test", vec![], vec![vec!['~']], legend));
+        let registry = build_registry(builder);
+
+        let result = check_palette_refs(&registry);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_check_palette_refs_missing() {
+        let mut bindings = HashMap::new();
+        bindings.insert('A', "$nonexistent".to_string());
+        let mut legend = HashMap::new();
+        legend.insert('~', LegendEntry::Fill {
+            name: "checker".to_string(),
+            bindings,
+        });
+
+        let mut builder = RegistryBuilder::new();
+        builder.add_shape(Shape::new("test", vec![], vec![vec!['~']], legend));
+        let registry = build_registry(builder);
+
+        let result = check_palette_refs(&registry);
+        assert!(result.has_warnings());
+    }
+
+    // -- check_duplicate_names --
+
+    #[test]
+    fn test_check_duplicate_names_shape_prefab_collision() {
+        let mut builder = RegistryBuilder::new();
+        builder.add_shape(Shape::new("widget", vec![], vec![vec!['#']], HashMap::new()));
+
+        let mut legend = HashMap::new();
+        legend.insert('W', "widget".to_string());
+        builder.add_prefab(Prefab::new("widget", vec![], vec![vec!['W']], legend));
+        let registry = build_registry(builder);
+
+        let result = check_duplicate_names(&registry);
+        assert!(result.has_warnings());
+    }
+
+    #[test]
+    fn test_check_duplicate_names_no_collision() {
+        let mut builder = RegistryBuilder::new();
+        builder.add_shape(Shape::new("wall", vec![], vec![vec!['#']], HashMap::new()));
+
+        let mut legend = HashMap::new();
+        legend.insert('W', "wall".to_string());
+        builder.add_prefab(Prefab::new("tower", vec![], vec![vec!['W']], legend));
+        let registry = build_registry(builder);
+
+        let result = check_duplicate_names(&registry);
+        assert!(!result.has_warnings());
     }
 }

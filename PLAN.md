@@ -240,10 +240,10 @@ Phased approach from core parsing to full toolchain.
 
 ### 5.2 Advanced Validation
 
-- [ ] Warn on unused assets
-- [ ] Warn on shadowed definitions
-- [ ] Check for palette colour unused in shapes
-- [ ] Suggest fixes for common errors
+- [x] Warn on unused assets
+- [x] Warn on shadowed definitions
+- [x] Check for palette colour unused in shapes
+- [x] Suggest fixes for common errors
 
 ### 5.3 Documentation
 
