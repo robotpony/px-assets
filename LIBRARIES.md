@@ -72,6 +72,17 @@ Crate selection with rationale.
 
 **Rationale**: seahash is fast for non-cryptographic hashing. bincode for compact cache storage.
 
+## Slice / Reverse Pipeline
+
+No new crates required. `px slice` uses:
+
+| Crate | Already In | Purpose |
+|-------|-----------|---------|
+| `image` | Yes | PNG reading (`image::open`, `.to_rgba8()`, `.dimensions()`, `.get_pixel()`) |
+| `clap` | Yes | Subcommand and argument parsing |
+
+All analysis algorithms (grid detection, structural hashing, stamp grouping) are implemented in pure Rust with no external dependencies. The `palette` crate is available if colour-space-aware naming is added later (e.g., naming `$warm-red` instead of `$colour-0`).
+
 ## Output Format Support
 
 ### PICO-8

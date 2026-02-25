@@ -58,16 +58,15 @@ pub struct BuildArgs {
     pub watch: bool,
 }
 
-pub fn run(args: BuildArgs) -> Result<()> {
-    build_once(&args)?;
+pub fn run(args: BuildArgs, printer: &Printer) -> Result<()> {
+    build_once(&args, printer)?;
     if args.watch {
-        watch_loop(&args)?;
+        watch_loop(&args, printer)?;
     }
     Ok(())
 }
 
-fn build_once(args: &BuildArgs) -> Result<()> {
-    let printer = Printer::new();
+fn build_once(args: &BuildArgs, printer: &Printer) -> Result<()> {
 
     // Discover assets: no args = scan current dir (reads px.yaml), args = explicit paths
     let discovery = if args.files.is_empty() {
@@ -296,8 +295,7 @@ fn is_asset_path(path: &Path) -> bool {
 }
 
 /// Watch source directories and rebuild on changes.
-fn watch_loop(args: &BuildArgs) -> Result<()> {
-    let printer = Printer::new();
+fn watch_loop(args: &BuildArgs, printer: &Printer) -> Result<()> {
 
     // Determine directories to watch
     let watch_dirs: Vec<PathBuf> = if args.files.is_empty() {
@@ -361,7 +359,7 @@ fn watch_loop(args: &BuildArgs) -> Result<()> {
         while rx.recv_timeout(deadline).is_ok() {}
 
         printer.info("Rebuilding", "change detected");
-        if let Err(e) = build_once(args) {
+        if let Err(e) = build_once(args, printer) {
             printer.error("Error", &format!("{}", e));
         }
     }
@@ -667,6 +665,10 @@ mod tests {
     use super::*;
     use tempfile::tempdir;
 
+    fn test_printer() -> Printer {
+        Printer::new()
+    }
+
     #[test]
     fn test_build_simple_shape() {
         let dir = tempdir().unwrap();
@@ -702,7 +704,7 @@ name: test-square
             watch: false,
         };
 
-        run(args).unwrap();
+        run(args, &test_printer()).unwrap();
 
         // Check output exists
         let output_png = output_dir.join("test-square.png");
@@ -746,7 +748,7 @@ name: scaled-shape
             watch: false,
         };
 
-        run(args).unwrap();
+        run(args, &test_printer()).unwrap();
 
         let output_png = output_dir.join("scaled-shape.png");
         let img = image::open(&output_png).unwrap().to_rgba8();
@@ -795,7 +797,7 @@ name: shape-b
             watch: false,
         };
 
-        run(args).unwrap();
+        run(args, &test_printer()).unwrap();
 
         assert!(output_dir.join("shape-a.png").exists());
         assert!(output_dir.join("shape-b.png").exists());
@@ -836,7 +838,7 @@ scale: 2
             watch: false,
         };
 
-        run(args).unwrap();
+        run(args, &test_printer()).unwrap();
 
         let output_png = output_dir.join("fm-scaled.png");
         let img = image::open(&output_png).unwrap().to_rgba8();
@@ -881,7 +883,7 @@ scale: 2
             watch: false,
         };
 
-        run(args).unwrap();
+        run(args, &test_printer()).unwrap();
 
         let output_png = output_dir.join("override-test.png");
         let img = image::open(&output_png).unwrap().to_rgba8();
@@ -1036,7 +1038,7 @@ name: target-test
             watch: false,
         };
 
-        run(args).unwrap();
+        run(args, &test_printer()).unwrap();
 
         let output_png = output_dir.join("target-test.png");
         assert!(output_png.exists());
@@ -1091,7 +1093,7 @@ name: override-target
             watch: false,
         };
 
-        run(args).unwrap();
+        run(args, &test_printer()).unwrap();
 
         let output_png = output_dir.join("override-target.png");
         let img = image::open(&output_png).unwrap().to_rgba8();
@@ -1132,7 +1134,7 @@ name: wall
             watch: false,
         };
 
-        run(args).unwrap();
+        run(args, &test_printer()).unwrap();
 
         assert!(output_dir.join("wall.png").exists());
     }
@@ -1184,7 +1186,7 @@ name: wall
             watch: false,
         };
 
-        run(args).unwrap();
+        run(args, &test_printer()).unwrap();
 
         assert!(output_dir.join("default-out.png").exists());
     }
@@ -1223,7 +1225,7 @@ name: wall
             watch: false,
         };
 
-        run(args).unwrap();
+        run(args, &test_printer()).unwrap();
 
         let output_png = output_dir.join("scaled-via-manifest.png");
         let img = image::open(&output_png).unwrap().to_rgba8();

@@ -233,9 +233,9 @@ Phased approach from core parsing to full toolchain.
 
 - [x] Implement `px init`
 - [x] Implement `px palette` (extract colours from PNG → `.palette.md` format)
-- [ ] Implement `px list`
-- [ ] Add shell completions (clap_complete)
-- [ ] Add `--verbose` and `--quiet` modes
+- [x] Implement `px list`
+- [x] Add shell completions (clap_complete)
+- [x] Add `--verbose` and `--quiet` modes
 - [x] Add colour output (terminal colours)
 
 ### 5.2 Advanced Validation
@@ -263,6 +263,89 @@ Phased approach from core parsing to full toolchain.
 
 ---
 
+## Phase 6: Slice (Reverse Pipeline)
+
+**Goal**: Import existing PNGs by reverse-engineering them into px definition files.
+
+### 6.1 CLI Skeleton & PNG Loading
+
+- [ ] Add `px slice` subcommand with clap derive
+- [ ] Accept `<input>` path, `--cell`, `--output`, `--name`, `--stamps`, `--stamp-size`, `--separator`, `--palette`
+- [ ] Load PNG via `image::open`, convert to `RgbaImage`
+- [ ] Validate input (exists, is PNG, has nonzero dimensions)
+- [ ] Wire up Cargo-style terminal output (reuse `output.rs` printer)
+
+### 6.2 Grid Slicing (Explicit)
+
+- [ ] Parse `--cell WxH` argument (e.g., `16x16`)
+- [ ] Split image into uniform cells, producing `Vec<SlicedCell>`
+- [ ] Name cells as `{name}-{row}-{col}` (zero-indexed)
+- [ ] Handle edge cells that don't fill a complete cell (warn + include)
+- [ ] Skip fully transparent cells
+
+### 6.3 Grid Auto-Detection
+
+- [ ] Scan all rows: mark rows where every pixel is identical (or all transparent)
+- [ ] Scan all columns: same logic
+- [ ] Collapse adjacent separator rows/columns (multi-pixel separators)
+- [ ] Find most common spacing → derive cell dimensions
+- [ ] Support `--separator` colour override (default: transparent or auto)
+- [ ] Fallback: if no grid found, treat image as single sprite
+- [ ] Report detected grid dimensions to stderr
+
+### 6.4 Palette Extraction
+
+- [ ] Collect all unique RGBA values across all cells
+- [ ] Skip fully transparent pixels (alpha = 0)
+- [ ] Sort by frequency (most common first)
+- [ ] Assign names: `$colour-0`, `$colour-1`, etc.
+- [ ] Build reverse lookup: `HashMap<Rgba, String>`
+- [ ] Write `.palette.md` with frontmatter and `$name: #hex` lines
+- [ ] Refactor shared logic with existing `px palette` command
+
+### 6.5 Shape Generation (Pixel-Level)
+
+- [ ] For each cell, build a grid of glyph characters (one per pixel)
+- [ ] Assign glyphs to colours by frequency (most common → first available character)
+- [ ] Reserve builtin glyphs (`+`, `-`, `|`, `#`, `.`, `x`, ` `)
+- [ ] Map transparent pixels to `x`
+- [ ] Generate legend: glyph → palette colour reference
+- [ ] Write `.shape.md` with frontmatter, `px` code fence, and legend
+- [ ] Verify round-trip: `px build` on output should produce identical PNG
+
+### 6.6 Stamp Detection (Structural)
+
+- [ ] Determine candidate block sizes: all (w, h) pairs that evenly divide cell dimensions
+- [ ] For each candidate size, extract all blocks from all cells
+- [ ] Compute structural hash: replace colours with first-appearance index
+- [ ] Group blocks by structural hash
+- [ ] Score each candidate size: count of blocks replaced by reuse (higher = better)
+- [ ] Pick the best scoring size (or fall back to pixel-level if no reuse found)
+
+### 6.7 Stamp Detection (Colour Variants)
+
+- [ ] For each structural group with 2+ members, identify colour variants
+- [ ] Map structural indices to semantic tokens (`$`, `.`, or positional `A`, `B`)
+- [ ] Generate `.stamp.md` definitions with semantic/positional pixel grids
+- [ ] Assign glyph characters to stamps
+- [ ] Generate colour binding tables for each variant
+- [ ] Update shape generation to use stamp-level grids and stamp legends
+
+### 6.8 Round-Trip Verification
+
+- [ ] Build generated files with `px build`
+- [ ] Compare output PNG against original input pixel-by-pixel
+- [ ] Report mismatches with location and expected vs actual colour
+- [ ] Add `--verify` flag to `px slice` to run this automatically
+- [ ] Verify round-trip for pixel-level shapes (no `--stamps`)
+- [ ] Verify round-trip for stamp-detected shapes (`--stamps`)
+- [ ] Integration tests: slice → build → diff for each test fixture
+- [ ] Test fixtures: single sprite, uniform grid sheet, auto-detected grid, sheet with stamps
+
+**Deliverable**: `px slice tileset.png --cell 16x16 --stamps` outputs `.palette.md`, `.stamp.md`, and `.shape.md` files that round-trip back to the original image.
+
+---
+
 ## Future Considerations (Not Planned)
 
 - Animation support (frame sequences in shapes)
@@ -283,6 +366,7 @@ Phased approach from core parsing to full toolchain.
 | 3 | Targets | PICO-8 + Aseprite |
 | 4 | Iteration | Watch + preview |
 | 5 | Polish | Production ready |
+| 6 | Slice | PNG → definition files |
 
 ---
 

@@ -24,8 +24,7 @@ pub struct InitArgs {
     pub force: bool,
 }
 
-pub fn run(args: InitArgs) -> Result<()> {
-    let printer = Printer::new();
+pub fn run(args: InitArgs, printer: &Printer) -> Result<()> {
     let manifest_path = args.path.join(MANIFEST_FILENAME);
 
     // Check for existing manifest
@@ -111,6 +110,7 @@ pub fn run(args: InitArgs) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::output::Printer;
     use tempfile::tempdir;
 
     #[test]
@@ -129,7 +129,7 @@ mod tests {
             force: false,
         };
 
-        run(args).unwrap();
+        run(args, &Printer::new()).unwrap();
 
         let manifest_path = dir.path().join("px.yaml");
         assert!(manifest_path.exists());
@@ -150,7 +150,7 @@ mod tests {
             force: false,
         };
 
-        let result = run(args);
+        let result = run(args, &Printer::new());
         assert!(result.is_err());
     }
 
@@ -166,7 +166,7 @@ mod tests {
             force: true,
         };
 
-        run(args).unwrap();
+        run(args, &Printer::new()).unwrap();
 
         let content = fs::read_to_string(dir.path().join("px.yaml")).unwrap();
         assert!(content.contains("output: dist"));
@@ -196,7 +196,7 @@ mod tests {
             force: false,
         };
 
-        run(args).unwrap();
+        run(args, &Printer::new()).unwrap();
 
         let content = fs::read_to_string(dir.path().join("px.yaml")).unwrap();
         assert!(content.contains("sources:"));
@@ -213,7 +213,7 @@ mod tests {
             force: false,
         };
 
-        run(args).unwrap();
+        run(args, &Printer::new()).unwrap();
 
         let content = fs::read_to_string(dir.path().join("px.yaml")).unwrap();
         assert!(content.contains("output: dist"));

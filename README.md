@@ -72,10 +72,25 @@ px init my-project/  # Scan a specific directory
 px palette ref.png --max 16    # 16 most frequent colours
 ```
 
+**`px list`** shows discovered assets and dependency relationships.
+
+```bash
+px list                       # List all assets by type
+px list examples/pac-man/     # List assets in a directory
+px list --deps                # Show dependency graph
+```
+
 **`px validate`** checks assets for missing references, unused legends, and mismatched stamp sizes.
 
 ```bash
 px validate shapes/ prefabs/
+```
+
+**`px completions`** generates shell completions.
+
+```bash
+px completions zsh > _px      # Generate zsh completions
+px completions bash            # Generate bash completions
 ```
 
 ## Features
@@ -90,6 +105,8 @@ px validate shapes/ prefabs/
 - **Sprite sheet** packing with `--sheet` (shelf algorithm, TexturePacker-compatible JSON)
 - **Target profiles** for bundling output settings (`--target=web`, `--target=sheet`, or custom `.target.md` files)
 - PNG output with integer scaling
+- Global `-v` (verbose) and `-q` (quiet) output modes
+- Shell completions for bash, zsh, fish, elvish, powershell
 
 <details>
 <summary>Format examples</summary>

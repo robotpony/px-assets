@@ -120,7 +120,10 @@ pub fn check_shape_legend_refs(registry: &AssetRegistry) -> ValidationResult {
                                     shape.name, glyph, name
                                 ),
                             )
-                            .with_help("Define it in a .stamp.md file, or use a builtin stamp name"),
+                            .with_help(format!(
+                                "Define it in a .stamp.md file:\n  ---\n  name: {}\n  glyph: {}\n  ---\nOr use a builtin: corner, edge-h, edge-v, solid, fill, transparent",
+                                name, glyph
+                            )),
                         );
                     }
                 }
@@ -134,7 +137,9 @@ pub fn check_shape_legend_refs(registry: &AssetRegistry) -> ValidationResult {
                                     shape.name, glyph, name
                                 ),
                             )
-                            .with_help("Define it in a .brush.md file, or use a builtin brush name"),
+                            .with_help(format!(
+                                "Define it in a .brush.md file, or use a builtin: solid, checker, diagonal-l, diagonal-r, h-line, v-line, noise"
+                            )),
                         );
                     }
                 }
@@ -431,6 +436,261 @@ pub fn check_target_format(registry: &AssetRegistry) -> ValidationResult {
                 )
                 .with_help("Only 'png' format is currently supported"),
             );
+        }
+    }
+
+    result
+}
+
+/// Check for assets that are never referenced by any shape, prefab, or map.
+pub fn check_unused_assets(registry: &AssetRegistry) -> ValidationResult {
+    let mut result = ValidationResult::new();
+
+    // Collect all referenced stamp/brush names from shape legends
+    let mut used_stamps: HashSet<String> = HashSet::new();
+    let mut used_brushes: HashSet<String> = HashSet::new();
+    let mut used_shapes: HashSet<String> = HashSet::new();
+    let mut used_palettes: HashSet<String> = HashSet::new();
+    let _used_shaders: HashSet<String> = HashSet::new();
+
+    for shape in registry.shapes() {
+        for entry in shape.legend().values() {
+            match entry {
+                LegendEntry::StampRef(name) => {
+                    used_stamps.insert(name.clone());
+                }
+                LegendEntry::BrushRef { name, .. } | LegendEntry::Fill { name, .. } => {
+                    used_brushes.insert(name.clone());
+                }
+            }
+        }
+    }
+
+    // Collect shape/prefab references from prefabs and maps
+    for prefab in registry.prefabs() {
+        for name in prefab.referenced_names() {
+            used_shapes.insert(name.to_string());
+        }
+    }
+    for map in registry.maps() {
+        for name in map.referenced_names() {
+            if name != "empty" {
+                used_shapes.insert(name.to_string());
+            }
+        }
+    }
+
+    // Collect palette references from shaders
+    for shader in registry.shaders() {
+        used_palettes.insert(shader.palette.clone());
+    }
+
+    // Collect shader references (from being named in shapes/builds -- we can't
+    // know which shader is used at build time, so skip shader usage check)
+
+    // Builtin names to skip
+    let builtin_stamps = BuiltinStamps::all();
+    let builtin_stamp_names: HashSet<&str> = builtin_stamps
+        .iter()
+        .map(|s| s.name.as_str())
+        .collect();
+    let builtin_brushes = BuiltinBrushes::all();
+    let builtin_brush_names: HashSet<&str> = builtin_brushes
+        .iter()
+        .map(|b| b.name.as_str())
+        .collect();
+
+    // Check user-defined stamps
+    for name in registry.stamp_names() {
+        if builtin_stamp_names.contains(name) {
+            continue;
+        }
+        if !used_stamps.contains(name) {
+            result.push(
+                Diagnostic::warning(
+                    "px::validate::unused-asset",
+                    format!("Stamp '{}' is never referenced in any shape legend", name),
+                )
+                .with_help("Remove the unused stamp or reference it in a shape legend"),
+            );
+        }
+    }
+
+    // Check user-defined brushes
+    for name in registry.brush_names() {
+        if builtin_brush_names.contains(name) {
+            continue;
+        }
+        if !used_brushes.contains(name) {
+            result.push(
+                Diagnostic::warning(
+                    "px::validate::unused-asset",
+                    format!("Brush '{}' is never referenced in any shape legend", name),
+                )
+                .with_help("Remove the unused brush or reference it in a shape legend"),
+            );
+        }
+    }
+
+    // Check palettes (skip "default")
+    for name in registry.palette_names() {
+        if name == "default" {
+            continue;
+        }
+        if !used_palettes.contains(name) {
+            result.push(
+                Diagnostic::warning(
+                    "px::validate::unused-asset",
+                    format!("Palette '{}' is never referenced by any shader", name),
+                )
+                .with_help("Remove the unused palette or reference it in a shader"),
+            );
+        }
+    }
+
+    // Check shapes (only those not referenced by any prefab or map)
+    for name in registry.shape_names() {
+        if !used_shapes.contains(name) {
+            // Don't warn if there are no prefabs or maps (shapes are the leaf output)
+            if registry.prefabs().next().is_some() || registry.maps().next().is_some() {
+                result.push(
+                    Diagnostic::warning(
+                        "px::validate::unused-asset",
+                        format!("Shape '{}' is never referenced in any prefab or map", name),
+                    )
+                    .with_help("Remove the unused shape or reference it in a prefab or map legend"),
+                );
+            }
+        }
+    }
+
+    result
+}
+
+/// Check for user-defined stamps or brushes that shadow builtin definitions.
+pub fn check_shadowed_definitions(registry: &AssetRegistry) -> ValidationResult {
+    let mut result = ValidationResult::new();
+
+    let builtin_stamps = BuiltinStamps::all();
+    let builtin_stamp_names: HashSet<&str> = builtin_stamps
+        .iter()
+        .map(|s| s.name.as_str())
+        .collect();
+    let builtin_brushes = BuiltinBrushes::all();
+    let builtin_brush_names: HashSet<&str> = builtin_brushes
+        .iter()
+        .map(|b| b.name.as_str())
+        .collect();
+
+    // User stamps in the registry that shadow builtins.
+    // Since builtins are also loaded into the registry, we check if a user file
+    // defined a stamp with the same name. The registry stores the last-added,
+    // so if the user's stamp replaced a builtin, the registry has the user version.
+    // We detect this by checking if the registry has a stamp whose name matches
+    // a builtin AND the registry was built with builtins loaded (which it always
+    // is in practice). The stamp in the registry is the user's version.
+    for name in registry.stamp_names() {
+        if builtin_stamp_names.contains(name) {
+            // Check if user defined a stamp with this name.
+            // Since builtins are loaded first and user stamps override,
+            // any builtin-named stamp in the registry IS the user version.
+            // We detect shadowing by comparing the stamp against the builtin.
+            if let (Some(registry_stamp), Some(builtin_stamp)) = (
+                registry.get_stamp(name),
+                BuiltinStamps::get(name),
+            ) {
+                // If the stamp in the registry differs from the builtin, it's a shadow
+                if registry_stamp.pixels() != builtin_stamp.pixels() {
+                    result.push(
+                        Diagnostic::warning(
+                            "px::validate::shadowed-builtin",
+                            format!("Stamp '{}' shadows a builtin stamp", name),
+                        )
+                        .with_help("Rename the stamp to avoid shadowing the builtin, or use this intentionally to override it"),
+                    );
+                }
+            }
+        }
+    }
+
+    for name in registry.brush_names() {
+        if builtin_brush_names.contains(name) {
+            if let (Some(registry_brush), Some(builtin_brush)) = (
+                registry.get_brush(name),
+                BuiltinBrushes::get(name),
+            ) {
+                if registry_brush.pattern() != builtin_brush.pattern() {
+                    result.push(
+                        Diagnostic::warning(
+                            "px::validate::shadowed-builtin",
+                            format!("Brush '{}' shadows a builtin brush", name),
+                        )
+                        .with_help("Rename the brush to avoid shadowing the builtin, or use this intentionally to override it"),
+                    );
+                }
+            }
+        }
+    }
+
+    result
+}
+
+/// Check for palette colours that are never referenced in any shape or shader.
+pub fn check_unused_palette_colours(registry: &AssetRegistry) -> ValidationResult {
+    let mut result = ValidationResult::new();
+
+    // Collect all colour references from shape brush bindings
+    let mut used_colours: HashSet<String> = HashSet::new();
+
+    // $edge and $fill are always implicitly used by semantic stamp tokens
+    used_colours.insert("$edge".to_string());
+    used_colours.insert("$fill".to_string());
+    used_colours.insert("edge".to_string());
+    used_colours.insert("fill".to_string());
+
+    // Collect colour refs from shape legends (brush bindings)
+    for shape in registry.shapes() {
+        for entry in shape.legend().values() {
+            let bindings = match entry {
+                LegendEntry::BrushRef { bindings, .. } => bindings,
+                LegendEntry::Fill { bindings, .. } => bindings,
+                _ => continue,
+            };
+            for colour_ref in bindings.values() {
+                used_colours.insert(colour_ref.clone());
+                // Also add without $ prefix
+                if let Some(stripped) = colour_ref.strip_prefix('$') {
+                    used_colours.insert(stripped.to_string());
+                }
+            }
+        }
+    }
+
+    // Collect colour refs from shader palette_variant
+    for shader in registry.shaders() {
+        if let Some(variant) = &shader.palette_variant {
+            used_colours.insert(variant.clone());
+        }
+    }
+
+    // Check each palette's colours
+    for palette in registry.palettes() {
+        if palette.name == "default" {
+            continue;
+        }
+        for colour_name in palette.colour_names() {
+            if !used_colours.contains(colour_name) && !used_colours.contains(&format!("${}", colour_name)) {
+                result.push(
+                    Diagnostic::warning(
+                        "px::validate::unused-colour",
+                        format!(
+                            "Palette '{}': colour '{}' is never referenced",
+                            palette.name, colour_name
+                        ),
+                    )
+                    .with_help("Remove the unused colour or reference it in a shape legend binding"),
+                );
+            }
         }
     }
 

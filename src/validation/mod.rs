@@ -25,6 +25,9 @@ pub fn validate_registry(registry: &AssetRegistry) -> ValidationResult {
     result.merge(checks::check_stamp_sizes(registry));
     result.merge(checks::check_palette_refs(registry));
     result.merge(checks::check_target_format(registry));
+    result.merge(checks::check_unused_assets(registry));
+    result.merge(checks::check_shadowed_definitions(registry));
+    result.merge(checks::check_unused_palette_colours(registry));
 
     result
 }

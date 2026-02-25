@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.21.0] - 2026-02-24
+
+### Added
+
+- `px list` command for discovering and displaying project assets (Phase 5.1)
+  - Groups assets by type: palettes, stamps, brushes, shaders, shapes, prefabs, maps, targets
+  - `--deps` flag shows dependency graph with topological build order
+  - Accepts files or directories (defaults to current directory)
+- `px completions` command for shell completion generation (Phase 5.1)
+  - Supports bash, zsh, fish, elvish, and powershell via `clap_complete`
+  - Usage: `px completions zsh > _px` or `eval "$(px completions bash)"`
+- Global `--verbose` / `-v` and `--quiet` / `-q` flags (Phase 5.1)
+  - Verbose mode shows extra detail during builds
+  - Quiet mode suppresses status lines, showing only the final summary and errors
+  - Applied to all subcommands via clap global args
+- `Verbosity` enum and `Printer::with_verbosity()` for verbosity-aware output
+  - `printer.status()` and `printer.info()` suppressed in quiet mode
+  - `printer.verbose()` only shown in verbose mode
+  - `printer.success()`, `printer.warning()`, and `printer.error()` always shown
+- Snapshot tests for pipeline integration (shape PNG, shape/prefab/map/sheet metadata)
+
 ## [0.20.1] - 2026-02-23
 
 ### Added

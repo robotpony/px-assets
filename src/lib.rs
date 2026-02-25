@@ -14,6 +14,7 @@ pub mod types;
 pub mod validation;
 
 pub use discovery::{discover, discover_paths, DiscoveryResult, LoadOptions, Manifest, ScanResult};
+pub use output::{Printer, Verbosity};
 pub use error::{PxError, Result};
 pub use registry::{AssetId, AssetKind, AssetRegistry, RegistryBuilder};
 pub use render::{scale_pixels, write_png, write_sheet_json, MapRenderer, PrefabRenderer, RenderedShape, ShapeRenderer, SheetMeta, SheetPacker};

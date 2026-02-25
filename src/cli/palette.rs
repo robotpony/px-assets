@@ -19,8 +19,7 @@ pub struct PaletteArgs {
     pub max: Option<usize>,
 }
 
-pub fn run(args: PaletteArgs) -> Result<()> {
-    let printer = Printer::new();
+pub fn run(args: PaletteArgs, printer: &Printer) -> Result<()> {
     let path = &args.file;
     let display = display_path(path);
 

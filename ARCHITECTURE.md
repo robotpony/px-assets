@@ -280,6 +280,7 @@ src/
 ├── cli/
 │   ├── mod.rs
 │   ├── build.rs      # px build
+│   ├── slice.rs      # px slice
 │   ├── watch.rs      # px watch
 │   ├── validate.rs   # px validate
 │   └── preview.rs    # px preview
@@ -309,6 +310,12 @@ src/
 │   ├── shape.rs      # Shape rendering
 │   ├── composite.rs  # Prefab/map composition
 │   └── sheet.rs      # Sprite sheet packing
+├── slice/
+│   ├── mod.rs         # Orchestrates the reverse pipeline
+│   ├── grid.rs        # Grid detection and cell slicing
+│   ├── palette.rs     # Colour extraction (shared with cli/palette.rs)
+│   ├── stamps.rs      # Structural hashing and stamp detection
+│   └── generate.rs    # .shape.md / .stamp.md / .palette.md writers
 ├── output/
 │   ├── mod.rs
 │   ├── png.rs
@@ -437,6 +444,147 @@ Legend:            C: tower-cap
 3. Composite at calculated offsets
 4. Export combined image + metadata (positions, tags)
 ```
+
+## Reverse Pipeline (`px slice`)
+
+The forward pipeline builds images from definitions. The reverse pipeline recovers definitions from existing images.
+
+```
+Input PNG → Read Pixels → Slice Grid → Analyse → Detect Stamps → Generate Files
+    ↓           ↓             ↓           ↓            ↓              ↓
+  .png      RgbaImage    Vec<Cell>    Palette     Stamp groups    .palette.md
+                                      + colour    + structural    .stamp.md
+                                      frequency   hashes          .shape.md
+```
+
+### Phase 1: Load & Slice
+
+```
+Input PNG
+    │
+    ├── --cell WxH provided ──→ Uniform grid split
+    │
+    └── No --cell ──→ Auto-detect separators
+                          │
+                          ├── Found grid ──→ Split at detected boundaries
+                          └── No grid ──→ Treat as single sprite
+
+    Then: skip fully transparent cells
+```
+
+**Auto-detection algorithm:**
+1. For each row, check if all pixels match the separator colour (or all transparent)
+2. Same for columns
+3. `--separator` overrides which colour counts as a separator (default: transparent, then auto-detect the most common uniform-row colour)
+4. Find most common spacing between consecutive separator rows/columns
+5. If consistent spacing found → use as cell dimensions
+6. Handle multi-pixel-thick separators by collapsing adjacent separator rows/cols
+
+Each cell becomes a `SlicedCell`:
+
+```rust
+struct SlicedCell {
+    name: String,        // e.g., "sprites-0-2" (row-col)
+    pixels: RgbaImage,   // Cropped pixel data
+    origin: (u32, u32),  // Position in source image
+}
+```
+
+Fully transparent cells (every pixel has alpha = 0) are skipped with a note to stderr.
+
+### Phase 2: Palette Extraction
+
+Collect all unique RGBA values across all cells. Skip fully transparent pixels.
+
+```rust
+struct ExtractedPalette {
+    colours: Vec<(String, Rgba)>,  // ($colour-0, #hex), sorted by frequency
+    lookup: HashMap<Rgba, String>, // Reverse map: pixel → palette name
+}
+```
+
+Output: one `.palette.md` with `$colour-N: #RRGGBB` lines.
+
+Builds on the existing `px palette` command logic but structured for downstream consumption rather than stdout.
+
+### Phase 3: Stamp Detection
+
+Stamps are detected by finding repeating rectangular sub-blocks within and across cells.
+
+**Block size selection:** Try all sizes that evenly divide the cell dimensions. For a 16x16 cell, test 2x2, 4x4, 8x8, 16x16. Pick the size that maximizes reuse (most repeated blocks).
+
+**Structural hashing** enables colour-variant detection:
+
+```
+Block A: [Red, Red, Blue, Blue]  → Structure: [0, 0, 1, 1]
+Block B: [Grn, Grn, Ylw, Ylw]   → Structure: [0, 0, 1, 1]
+                                    ↑ Same structure → colour variants
+```
+
+Algorithm:
+1. For each NxN block, replace colours with order-of-first-appearance indices
+2. The index grid IS the structural hash
+3. Group blocks by structural hash
+4. Groups with 2+ instances → stamp definitions
+5. Map structural positions (0, 1, 2...) to positional tokens (`A`, `B`, `C`... following the brush convention)
+
+```rust
+struct DetectedStamp {
+    name: String,                       // e.g., "stamp-a"
+    glyph: char,                        // Assigned glyph for shapes
+    structure: Vec<Vec<u8>>,            // Structural pattern (index grid)
+    variants: Vec<HashMap<u8, Rgba>>,   // Colour bindings per variant
+}
+```
+
+**Glyph assignment** for shape grids:
+1. Reserve builtins: `+`, `-`, `|`, `#`, `.`, `x`, ` `
+2. Uppercase A-Z (26 glyphs)
+3. Lowercase a-z excluding x (25 glyphs)
+4. Digits 0-9 (10 glyphs)
+5. Symbols: `@`, `!`, `?`, `~`, `*`, `^`, `&`, `%`
+6. Warn if colour/stamp count exceeds available glyphs (~70)
+
+### Phase 4: Shape Generation
+
+For each sliced cell, produce a `.shape.md`:
+
+- If stamp detection succeeded: shape grid at stamp-level resolution (cell_width / stamp_width)
+- If no stamps: shape grid at pixel-level resolution (one glyph per pixel)
+- Legend maps each glyph to either a stamp name or a palette colour
+- Transparent pixels → `x` glyph
+
+```
+Generated shape (pixel-level, no stamps):
+
+---
+name: sprites-0-0
+---
+
+```px
+ABB
+ACC
+ABB
+```
+
+---
+A: { stamp: solid, $fill: $colour-0 }
+B: { stamp: solid, $fill: $colour-1 }
+C: { stamp: solid, $fill: $colour-2 }
+```
+
+### Slice Decisions
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Block size selection | Derive from cell size | Avoids user guesswork; tries all divisors |
+| Structural hashing | First-appearance index | Simple, fast, handles arbitrary colour counts |
+| Palette scope | One shared palette per slice run | Colours often shared across sprites in a sheet |
+| Stamp scope | Global across all cells | Maximizes reuse detection |
+| Glyph assignment | Frequency-based (most common first) | Common glyphs get easy-to-read characters |
+| Grid auto-detect | Separator row/column scanning | Works for most sprite sheet conventions |
+| `--stamp-size` validation | Must evenly divide cell dims | Warn and fall back to auto if it doesn't divide evenly |
+| Fallback | Always produce output | Pixel-level shapes work even when detection fails |
 
 ## Architectural Decisions
 

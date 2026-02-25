@@ -81,6 +81,88 @@ px init                       # Create px.yaml and example files
 px init --minimal             # Just px.yaml, no examples
 ```
 
+#### `px slice`
+
+Reverse-engineer a PNG into px definition files.
+
+```bash
+# Single sprite
+px slice hero.png                         # → hero.palette.md + hero-0-0.shape.md
+
+# Sprite sheet with known cell size
+px slice tiles.png --cell 16x16           # → tiles.palette.md + tiles-R-C.shape.md
+
+# Sprite sheet with auto-detection
+px slice sheet.png                        # Auto-detect grid separators
+
+# With stamp detection
+px slice tiles.png --cell 16x16 --stamps  # Also extract .stamp.md files
+
+# Custom output
+px slice sheet.png -o assets/ --name dungeon
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `<input>` | Path to PNG file |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--cell <WxH>` | Cell dimensions for grid slicing (e.g., `16x16`, `8x8`) |
+| `--separator <COLOR>` | Grid separator colour (`transparent`, `#hex`). Default: auto-detect |
+| `--output, -o <DIR>` | Output directory (default: current directory) |
+| `--name <NAME>` | Base name for generated files (default: input filename stem) |
+| `--stamps` | Enable stamp pattern detection across cells |
+| `--stamp-size <NxN>` | Override auto stamp size selection (e.g., `4x4`) |
+| `--palette <NAME>` | Name for the generated palette (default: same as `--name`) |
+| `--verify` | After generating files, build them and verify pixel-identical output |
+
+**Naming convention:**
+
+Files are named `{name}-{row}-{col}` using zero-indexed row and column positions:
+- `tiles-0-0.shape.md` (top-left cell)
+- `tiles-0-1.shape.md` (first row, second column)
+- `tiles-2-3.shape.md` (third row, fourth column)
+
+Single sprites (no grid) produce `{name}-0-0.shape.md`.
+
+**Output files:**
+
+```
+output/
+├── {name}.palette.md           # Shared palette for all cells
+├── {name}-0-0.shape.md         # One shape per cell
+├── {name}-0-1.shape.md
+├── {name}-{stamp}.stamp.md     # Detected stamps (if --stamps)
+└── ...
+```
+
+**Grid auto-detection:**
+
+When `--cell` is not provided, the tool scans for separator rows and columns:
+1. Rows/columns where every pixel is the same colour (or all transparent)
+2. Consistent spacing between separators → cell dimensions
+3. If no grid detected → treats the entire image as a single sprite
+
+**Stamp detection (--stamps):**
+
+When enabled:
+1. Tests block sizes that evenly divide cell dimensions
+2. Picks the size that maximizes reuse across all cells
+3. Detects colour variants (same structure, different colours)
+4. Generates `.stamp.md` files with positional tokens (`A`, `B`, `C`...)
+5. Shape grids use stamp-level resolution instead of pixel-level
+
+If `--stamp-size` is provided but doesn't evenly divide the cell dimensions, the tool warns and falls back to auto-detection.
+
+**Round-trip guarantee:**
+
+Running `px build` on the generated files should produce an image pixel-identical to the input (at 1x scale, without shader effects). This is the primary correctness invariant.
+
 #### `px list`
 
 List discovered assets.

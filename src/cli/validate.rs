@@ -16,8 +16,7 @@ pub struct ValidateArgs {
     pub files: Vec<PathBuf>,
 }
 
-pub fn run(args: ValidateArgs) -> Result<()> {
-    let printer = Printer::new();
+pub fn run(args: ValidateArgs, printer: &Printer) -> Result<()> {
 
     // Discover and load assets
     let discovery = discover_paths(&args.files)?;

@@ -17,35 +17,77 @@ const CYAN: &str = "\x1b[36m";
 /// Width for right-aligned verb column.
 const VERB_WIDTH: usize = 12;
 
+/// Verbosity level for output.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Verbosity {
+    Quiet,
+    Normal,
+    Verbose,
+}
+
 /// Terminal-aware status printer.
 ///
 /// Prints Cargo-style status lines to stderr with optional ANSI colours.
 /// Colour is enabled when stderr is a terminal.
 pub struct Printer {
     color: bool,
+    verbosity: Verbosity,
 }
 
 impl Printer {
     pub fn new() -> Self {
         Self {
             color: io::stderr().is_terminal(),
+            verbosity: Verbosity::Normal,
         }
     }
 
+    /// Create a printer with the given verbosity level.
+    pub fn with_verbosity(verbosity: Verbosity) -> Self {
+        Self {
+            color: io::stderr().is_terminal(),
+            verbosity,
+        }
+    }
+
+    /// Get the current verbosity level.
+    pub fn verbosity(&self) -> Verbosity {
+        self.verbosity
+    }
+
+    /// Returns true if verbose mode is enabled.
+    pub fn is_verbose(&self) -> bool {
+        self.verbosity == Verbosity::Verbose
+    }
+
     /// Print a status line with a green bold verb.
-    /// e.g. "   Compiling player-stand (8x12)"
+    /// Suppressed in quiet mode.
     pub fn status(&self, verb: &str, message: &str) {
-        self.print_line(GREEN, verb, message);
+        if self.verbosity != Verbosity::Quiet {
+            self.print_line(GREEN, verb, message);
+        }
     }
 
     /// Print a success/completion line with a green bold verb.
+    /// Shown in all modes (final summary).
     pub fn success(&self, verb: &str, message: &str) {
         self.print_line(GREEN, verb, message);
     }
 
     /// Print an informational line with a cyan bold verb.
+    /// Suppressed in quiet mode.
     pub fn info(&self, verb: &str, message: &str) {
-        self.print_line(CYAN, verb, message);
+        if self.verbosity != Verbosity::Quiet {
+            self.print_line(CYAN, verb, message);
+        }
+    }
+
+    /// Print a verbose-only line with a dim verb.
+    /// Only shown in verbose mode.
+    pub fn verbose(&self, verb: &str, message: &str) {
+        if self.verbosity == Verbosity::Verbose {
+            self.print_line(DIM, verb, message);
+        }
     }
 
     /// Print a warning line with a yellow bold verb.
